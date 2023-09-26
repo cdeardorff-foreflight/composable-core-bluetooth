@@ -9,12 +9,14 @@
 import Foundation
 import CoreBluetooth
 
-public struct Characteristic {
+extension CBCharacteristicProperties: Hashable { }
+
+public struct Characteristic: Hashable {
 
     let rawValue: CBCharacteristic?
     
     public let identifier: CBUUID
-    public let service: Service
+    public let service: Service?
     public let properties: CBCharacteristicProperties
     public var value: Data?
     public var descriptors: [Descriptor]
@@ -28,6 +30,11 @@ public struct Characteristic {
         value = characteristic.value
         descriptors = characteristic.descriptors?.map(Descriptor.init) ?? []
         isNotifying = characteristic.isNotifying
+    }
+    
+    init?(from characteristic: CBCharacteristic?) {
+        guard let characteristic else { return nil }
+        self.init(from: characteristic)
     }
     
     init(
@@ -97,10 +104,10 @@ extension Characteristic: Equatable {
             // Here we explicitly check for service property without
             // checking its characteristics for equality
             // to avoid recursion which leads to stack overflow
-            lhs.service.identifier == rhs.service.identifier &&
-            lhs.service.characteristics().count == rhs.service.characteristics().count &&
-            lhs.service.includedServices == rhs.service.includedServices &&
-            lhs.service.isPrimary == rhs.service.isPrimary &&
-            lhs.service.rawValue == rhs.service.rawValue
+            lhs.service?.identifier == rhs.service?.identifier &&
+            lhs.service?.characteristics().count == rhs.service?.characteristics().count &&
+            lhs.service?.includedServices == rhs.service?.includedServices &&
+            lhs.service?.isPrimary == rhs.service?.isPrimary &&
+            lhs.service?.rawValue == rhs.service?.rawValue
     }
 }

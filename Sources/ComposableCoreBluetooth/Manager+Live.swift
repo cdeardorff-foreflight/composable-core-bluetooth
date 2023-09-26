@@ -16,41 +16,46 @@ private var dependencies: [AnyHashable: Dependencies] = [:]
 private struct Dependencies {
     let manager: CBCentralManager
     let delegate: BluetoothManager.Delegate
-    let subscriber: Effect<BluetoothManager.Action, Never>.Subscriber
+    let send: Send<BluetoothManager.Action>
 }
 
 extension BluetoothManager {
+    
+    private struct CreateId: Hashable { }
     
     public static let live: BluetoothManager = { () -> BluetoothManager in
         var manager = BluetoothManager()
         
         manager.create = { id, queue, options in
+            
             return .merge(
-                Effect.run { subscriber in
-                    let delegate = Delegate(subscriber)
-                    let manager = CBCentralManager(delegate: delegate, queue: queue, options: options?.toDictionary())
-                    
-                    dependencies[id] = Dependencies(manager: manager, delegate: delegate, subscriber: subscriber)
-                    
-                    return AnyCancellable {
-                        dependencies[id] = nil
-                    }
+                .run { send in
+                    let delegate = Delegate(send)
+                    let manager = CBCentralManager(
+                        delegate: delegate,
+                        queue: queue,
+                        options: options?.toDictionary()
+                    )
+                    dependencies[id] = Dependencies(manager: manager, delegate: delegate, send: send)
                 },
-                Deferred(createPublisher: {
-                    dependencies[id]?
+                .run { send in
+                    guard let isScanningStream = dependencies[id]?
                         .manager
                         .publisher(for: \.isScanning)
                         .map(BluetoothManager.Action.didUpdateScanningState)
-                        .eraseToAnyPublisher() ?? Effect.none.eraseToAnyPublisher()
-                }).eraseToEffect()
+                        .values
+                    else { return }
+                    
+                    for try await action in isScanningStream {
+                        await send(action)
+                    }
+                }
             )
+            .cancellable(id: CreateId())
         }
         
         manager.destroy = { id in
-            .fireAndForget {
-                dependencies[id]?.subscriber.send(completion: .finished)
-                dependencies[id] = nil
-            }
+            .cancel(id: CreateId())
         }
         
         manager.connect = { id, peripheral, options in
@@ -131,7 +136,7 @@ extension BluetoothManager {
             return dependency.manager.state
         }
         
-        manager.peripheralEnvironment = { id, uuid in
+        manager.peripheralEnvironment = { (id, uuid) -> Peripheral.Environment? in
             
             guard let dependency = dependencies[id] else {
                 couldNotFindBluetoothManager(id: id)
@@ -143,7 +148,7 @@ extension BluetoothManager {
                 return nil
             }
             
-            return Peripheral.Environment.live(from: rawPeripheral, subscriber: dependency.subscriber)
+            return Peripheral.Environment.live(from: rawPeripheral, send: dependency.send)
         }
         
         #if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
@@ -164,62 +169,78 @@ extension BluetoothManager {
 
 extension BluetoothManager {
     class Delegate: NSObject, CBCentralManagerDelegate {
-        let subscriber: Effect<BluetoothManager.Action, Never>.Subscriber
+        let send: Send<BluetoothManager.Action>
         
-        init(_ subscriber: Effect<BluetoothManager.Action, Never>.Subscriber) {
-            self.subscriber = subscriber
+        init(_ send: Send<BluetoothManager.Action>) {
+            self.send = send
         }
         
         func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-            subscriber.send(.peripheral(peripheral.identifier, .didConnect))
+            Task { @MainActor in
+                send(.peripheral(peripheral.identifier, .didConnect))
+            }
         }
         
         func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
-            if let error = error {
-                if let error = error as? CBError {
-                    subscriber.send(.peripheral(peripheral.identifier, .didDisconnect(.coreBluetooth(error))))
+            Task { @MainActor in
+                if let error = error {
+                    if let error = error as? CBError {
+                        send(.peripheral(peripheral.identifier, .didDisconnect(.coreBluetooth(error))))
+                    } else {
+                        send(.peripheral(peripheral.identifier, .didDisconnect(.unknown(error.localizedDescription))))
+                    }
                 } else {
-                    subscriber.send(.peripheral(peripheral.identifier, .didDisconnect(.unknown(error.localizedDescription))))
+                    send(.peripheral(peripheral.identifier, .didDisconnect(.none)))
                 }
-            } else {
-                subscriber.send(.peripheral(peripheral.identifier, .didDisconnect(.none)))
             }
         }
         
         func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
-            if let error = error {
-                if let error = error as? CBError {
-                    subscriber.send(.peripheral(peripheral.identifier, .didFailToConnect(.coreBluetooth(error))))
+            Task { @MainActor in
+                if let error = error {
+                    if let error = error as? CBError {
+                        send(.peripheral(peripheral.identifier, .didFailToConnect(.coreBluetooth(error))))
+                    } else {
+                        send(.peripheral(peripheral.identifier, .didFailToConnect(.unknown(error.localizedDescription))))
+                    }
                 } else {
-                    subscriber.send(.peripheral(peripheral.identifier, .didFailToConnect(.unknown(error.localizedDescription))))
+                    send(.peripheral(peripheral.identifier, .didFailToConnect(.unknown(.none))))
                 }
-            } else {
-                subscriber.send(.peripheral(peripheral.identifier, .didFailToConnect(.unknown(.none))))
             }
         }
 
         
         func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
-            subscriber.send(.didDiscover(Peripheral.State.live(from: peripheral), BluetoothManager.AdvertismentData(from: advertisementData), RSSI))
+            Task { @MainActor in
+                send(.didDiscover(Peripheral.State.live(from: peripheral), BluetoothManager.AdvertismentData(from: advertisementData), RSSI))
+            }
         }
         
         func centralManagerDidUpdateState(_ central: CBCentralManager) {
-            subscriber.send(.didUpdateState(central.state))
+            Task { @MainActor in
+                send(.didUpdateState(central.state))
+            }
         }
         
         func centralManager(_ central: CBCentralManager, willRestoreState dict: [String: Any]) {
-            subscriber.send(.willRestore(RestorationOptions(from: dict)))
+            Task { @MainActor in
+                send(.willRestore(RestorationOptions(from: dict)))
+            }
         }
         
         #if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
         func centralManager(_ central: CBCentralManager, connectionEventDidOccur event: CBConnectionEvent, for peripheral: CBPeripheral) {
-            subscriber.send(.peripheral(peripheral.identifier, .connectionEventDidOccur(event)))
+            Task { @MainActor in
+                send(.peripheral(peripheral.identifier, .connectionEventDidOccur(event)))
+            }
         }
         #endif
         
         #if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
         func centralManager(_ central: CBCentralManager, didUpdateANCSAuthorizationFor peripheral: CBPeripheral) {
-            subscriber.send(.peripheral(peripheral.identifier, .didUpdateANCSAuthorization(peripheral.ancsAuthorized)))
+            Task { @MainActor in
+                send(.peripheral(peripheral.identifier, .didUpdateANCSAuthorization(peripheral.ancsAuthorized)))
+            }
         }
         #endif
     }

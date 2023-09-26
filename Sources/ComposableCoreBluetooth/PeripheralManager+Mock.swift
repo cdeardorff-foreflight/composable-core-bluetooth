@@ -15,40 +15,40 @@ import ComposableArchitecture
 extension PeripheralManager {
     
     public static func mock(
-        create: @escaping (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action, Never> = { _, _, _ in
+        create: @escaping (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action> = { _, _, _ in
             _unimplemented("create")
         },
-        destroy: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
+        destroy: @escaping (AnyHashable) -> Effect<Never> = { _ in
             _unimplemented("destroy")
         },
-        addService: @escaping (AnyHashable, MutableService) -> Effect<Never, Never> = { _, _ in
+        addService: @escaping (AnyHashable, MutableService) -> Effect<Never> = { _, _ in
             _unimplemented("addService")
         },
-        removeService: @escaping (AnyHashable, MutableService) -> Effect<Never, Never> = { _, _ in
+        removeService: @escaping (AnyHashable, MutableService) -> Effect<Never> = { _, _ in
             _unimplemented("removeService")
         },
-        removeAllServices: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
+        removeAllServices: @escaping (AnyHashable) -> Effect<Never> = { _ in
             _unimplemented("removeAllServices")
         },
-        startAdvertising: @escaping (AnyHashable, AdvertismentData?) -> Effect<Never, Never> = { _, _ in
+        startAdvertising: @escaping (AnyHashable, AdvertismentData?) -> Effect<Never> = { _, _ in
             _unimplemented("startAdvertising")
         },
-        stopAdvertising: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
+        stopAdvertising: @escaping (AnyHashable) -> Effect<Never> = { _ in
             _unimplemented("stopAdvertising")
         },
-        updateValue: @escaping (AnyHashable, Data, MutableCharacteristic, [Central]?) -> Effect<Bool, Never> = { _, _, _, _ in
+        updateValue: @escaping (AnyHashable, Data, MutableCharacteristic, [Central]?) -> Effect<Bool> = { _, _, _, _ in
             _unimplemented("updateValue")
         },
-        respondToRequest: @escaping (AnyHashable, ATTRequest, CBATTError.Code) -> Effect<Never, Never> = { _, _, _ in
+        respondToRequest: @escaping (AnyHashable, ATTRequest, CBATTError.Code) -> Effect<Never> = { _, _, _ in
             _unimplemented("respondToRequest")
         },
-        setDesiredConnectionLatency: @escaping (AnyHashable, CBPeripheralManagerConnectionLatency, Central) -> Effect<Never, Never> = { _, _, _ in
+        setDesiredConnectionLatency: @escaping (AnyHashable, CBPeripheralManagerConnectionLatency, Central) -> Effect<Never> = { _, _, _ in
             _unimplemented("setDesiredConnectionLatency")
         },
-        publishL2CAPChannel: @escaping (AnyHashable, Bool) -> Effect<Never, Never> = { _, _ in
+        publishL2CAPChannel: @escaping (AnyHashable, Bool) -> Effect<Never> = { _, _ in
             _unimplemented("publishL2CAPChannel")
         },
-        unpublishL2CAPChannel: @escaping (AnyHashable, CBL2CAPPSM) -> Effect<Never, Never> = { _, _ in
+        unpublishL2CAPChannel: @escaping (AnyHashable, CBL2CAPPSM) -> Effect<Never> = { _, _ in
             _unimplemented("unpublishL2CAPChannel")
         }
     ) -> Self {
@@ -69,41 +69,41 @@ extension PeripheralManager {
     }
     
     public static func failing(
-        create: @escaping (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action, Never> = { _, _, _ in
-            .failing("create")
+        create: @escaping (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action> = { _, _, _ in
+            .unimplemented("create")
         },
-        destroy: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
-            .failing("destroy")
+        destroy: @escaping (AnyHashable) -> Effect<Never> = { _ in
+            .unimplemented("destroy")
         },
-        addService: @escaping (AnyHashable, MutableService) -> Effect<Never, Never> = { _, _ in
-            .failing("addService")
+        addService: @escaping (AnyHashable, MutableService) -> Effect<Never> = { _, _ in
+            .unimplemented("addService")
         },
-        removeService: @escaping (AnyHashable, MutableService) -> Effect<Never, Never> = { _, _ in
-            .failing("removeService")
+        removeService: @escaping (AnyHashable, MutableService) -> Effect<Never> = { _, _ in
+            .unimplemented("removeService")
         },
-        removeAllServices: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
-            .failing("removeAllServices")
+        removeAllServices: @escaping (AnyHashable) -> Effect<Never> = { _ in
+            .unimplemented("removeAllServices")
         },
-        startAdvertising: @escaping (AnyHashable, AdvertismentData?) -> Effect<Never, Never> = { _, _ in
-            .failing("startAdvertising")
+        startAdvertising: @escaping (AnyHashable, AdvertismentData?) -> Effect<Never> = { _, _ in
+            .unimplemented("startAdvertising")
         },
-        stopAdvertising: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
-            .failing("stopAdvertising")
+        stopAdvertising: @escaping (AnyHashable) -> Effect<Never> = { _ in
+            .unimplemented("stopAdvertising")
         },
-        updateValue: @escaping (AnyHashable, Data, MutableCharacteristic, [Central]?) -> Effect<Bool, Never> = { _, _, _, _ in
-            .failing("updateValue")
+        updateValue: @escaping (AnyHashable, Data, MutableCharacteristic, [Central]?) -> Effect<Bool> = { _, _, _, _ in
+            .unimplemented("updateValue")
         },
-        respondToRequest: @escaping (AnyHashable, ATTRequest, CBATTError.Code) -> Effect<Never, Never> = { _, _, _ in
-            .failing("respondToRequest")
+        respondToRequest: @escaping (AnyHashable, ATTRequest, CBATTError.Code) -> Effect<Never> = { _, _, _ in
+            .unimplemented("respondToRequest")
         },
-        setDesiredConnectionLatency: @escaping (AnyHashable, CBPeripheralManagerConnectionLatency, Central) -> Effect<Never, Never> = { _, _, _ in
-            .failing("setDesiredConnectionLatency")
+        setDesiredConnectionLatency: @escaping (AnyHashable, CBPeripheralManagerConnectionLatency, Central) -> Effect<Never> = { _, _, _ in
+            .unimplemented("setDesiredConnectionLatency")
         },
-        publishL2CAPChannel: @escaping (AnyHashable, Bool) -> Effect<Never, Never> = { _, _ in
-            .failing("publishL2CAPChannel")
+        publishL2CAPChannel: @escaping (AnyHashable, Bool) -> Effect<Never> = { _, _ in
+            .unimplemented("publishL2CAPChannel")
         },
-        unpublishL2CAPChannel: @escaping (AnyHashable, CBL2CAPPSM) -> Effect<Never, Never> = { _, _ in
-            .failing("unpublishL2CAPChannel")
+        unpublishL2CAPChannel: @escaping (AnyHashable, CBL2CAPPSM) -> Effect<Never> = { _, _ in
+            .unimplemented("unpublishL2CAPChannel")
         }
     ) -> Self {
         Self(

@@ -14,51 +14,51 @@ import ComposableArchitecture
 @available(watchOS, unavailable)
 public struct PeripheralManager {
     
-    var create: (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action, Never> = { _, _, _ in
+    var create: (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action> = { _, _, _ in
         _unimplemented("create")
     }
     
-    var destroy: (AnyHashable) -> Effect<Never, Never> = { _ in
+    var destroy: (AnyHashable) -> Effect<Never> = { _ in
         _unimplemented("destroy")
     }
     
-    var addService: (AnyHashable, MutableService) -> Effect<Never, Never> = { _, _ in
+    var addService: (AnyHashable, MutableService) -> Effect<Never> = { _, _ in
         _unimplemented("addService")
     }
     
-    var removeService: (AnyHashable, MutableService) -> Effect<Never, Never> = { _, _ in
+    var removeService: (AnyHashable, MutableService) -> Effect<Never> = { _, _ in
         _unimplemented("removeService")
     }
     
-    var removeAllServices: (AnyHashable) -> Effect<Never, Never> = { _ in
+    var removeAllServices: (AnyHashable) -> Effect<Never> = { _ in
         _unimplemented("removeAllServices")
     }
     
-    var startAdvertising: (AnyHashable, AdvertismentData?) -> Effect<Never, Never> = { _, _ in
+    var startAdvertising: (AnyHashable, AdvertismentData?) -> Effect<Never> = { _, _ in
         _unimplemented("startAdvertising")
     }
     
-    var stopAdvertising: (AnyHashable) -> Effect<Never, Never> = { _ in
+    var stopAdvertising: (AnyHashable) -> Effect<Never> = { _ in
         _unimplemented("stopAdvertising")
     }
     
-    var updateValue: (AnyHashable, Data, MutableCharacteristic, [Central]?) -> Effect<Bool, Never> = { _, _, _, _ in
+    var updateValue: (AnyHashable, Data, MutableCharacteristic, [Central]?) -> Effect<Bool> = { _, _, _, _ in
         _unimplemented("updateValue")
     }
     
-    var respondToRequest: (AnyHashable, ATTRequest, CBATTError.Code) -> Effect<Never, Never> = { _, _, _ in
+    var respondToRequest: (AnyHashable, ATTRequest, CBATTError.Code) -> Effect<Never> = { _, _, _ in
         _unimplemented("respondToRequest")
     }
     
-    var setDesiredConnectionLatency: (AnyHashable, CBPeripheralManagerConnectionLatency, Central) -> Effect<Never, Never> = { _, _, _ in
+    var setDesiredConnectionLatency: (AnyHashable, CBPeripheralManagerConnectionLatency, Central) -> Effect<Never> = { _, _, _ in
         _unimplemented("setDesiredConnectionLatency")
     }
     
-    var publishL2CAPChannel: (AnyHashable, Bool) -> Effect<Never, Never> = { _, _ in
+    var publishL2CAPChannel: (AnyHashable, Bool) -> Effect<Never> = { _, _ in
         _unimplemented("publishL2CAPChannel")
     }
     
-    var unpublishL2CAPChannel: (AnyHashable, CBL2CAPPSM) -> Effect<Never, Never> = { _, _ in
+    var unpublishL2CAPChannel: (AnyHashable, CBL2CAPPSM) -> Effect<Never> = { _, _ in
         _unimplemented("unpublishL2CAPChannel")
     }
     
@@ -75,51 +75,51 @@ public struct PeripheralManager {
 @available(watchOS, unavailable)
 extension PeripheralManager {
     
-    public func create(id: AnyHashable, queue: DispatchQueue?, options: InitializationOptions?) -> Effect<Action, Never> {
+    public func create(id: AnyHashable, queue: DispatchQueue?, options: InitializationOptions?) -> Effect<Action> {
         create(id, queue, options)
     }
     
-    public func destroy(id: AnyHashable) -> Effect<Never, Never> {
+    public func destroy(id: AnyHashable) -> Effect<Never> {
         destroy(id)
     }
     
-    public func add(id: AnyHashable, service: MutableService) -> Effect<Never, Never> {
+    public func add(id: AnyHashable, service: MutableService) -> Effect<Never> {
         addService(id, service)
     }
     
-    public func remove(id: AnyHashable, service: MutableService) -> Effect<Never, Never> {
+    public func remove(id: AnyHashable, service: MutableService) -> Effect<Never> {
         removeService(id, service)
     }
     
-    public func removeAllServices(id: AnyHashable) -> Effect<Never, Never> {
+    public func removeAllServices(id: AnyHashable) -> Effect<Never> {
         removeAllServices(id)
     }
     
-    public func startAdvertising(id: AnyHashable, _ adverstimentData: AdvertismentData?) -> Effect<Never, Never> {
+    public func startAdvertising(id: AnyHashable, _ adverstimentData: AdvertismentData?) -> Effect<Never> {
         startAdvertising(id, adverstimentData)
     }
     
-    public func stopAdvertising(id: AnyHashable) -> Effect<Never, Never> {
+    public func stopAdvertising(id: AnyHashable) -> Effect<Never> {
         stopAdvertising(id)
     }
     
-    public func updateValue(id: AnyHashable, _ data: Data, for characteristic: MutableCharacteristic, onSubscribed centrals: [Central]?) -> Effect<Bool, Never> {
+    public func updateValue(id: AnyHashable, _ data: Data, for characteristic: MutableCharacteristic, onSubscribed centrals: [Central]?) -> Effect<Bool> {
         updateValue(id, data, characteristic, centrals)
     }
     
-    public func respond(id: AnyHashable, to request: ATTRequest, with result: CBATTError.Code) -> Effect<Never, Never> {
+    public func respond(id: AnyHashable, to request: ATTRequest, with result: CBATTError.Code) -> Effect<Never> {
         respondToRequest(id, request, result)
     }
     
-    public func setDesiredConnectionLatency(id: AnyHashable, _ latency: CBPeripheralManagerConnectionLatency, for central: Central) -> Effect<Never, Never> {
+    public func setDesiredConnectionLatency(id: AnyHashable, _ latency: CBPeripheralManagerConnectionLatency, for central: Central) -> Effect<Never> {
         setDesiredConnectionLatency(id, latency, central)
     }
     
-    public func publishL2CAPChannel(id: AnyHashable, withEncryption: Bool) -> Effect<Never, Never> {
+    public func publishL2CAPChannel(id: AnyHashable, withEncryption: Bool) -> Effect<Never> {
         publishL2CAPChannel(id, withEncryption)
     }
     
-    public func unpublishL2CAPChannel(id: AnyHashable, _ psm: CBL2CAPPSM) -> Effect<Never, Never> {
+    public func unpublishL2CAPChannel(id: AnyHashable, _ psm: CBL2CAPPSM) -> Effect<Never> {
         unpublishL2CAPChannel(id, psm)
     }
     

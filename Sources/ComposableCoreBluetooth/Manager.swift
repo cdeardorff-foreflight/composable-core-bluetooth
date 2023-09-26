@@ -10,21 +10,36 @@ import Foundation
 import CoreBluetooth
 import ComposableArchitecture
 
+extension CBManagerState: CustomStringConvertible {
+    public var description: String {
+        return switch self {
+        case .unknown: "unknown"
+        case .resetting: "resetting"
+        case .unsupported: "unsupported"
+        case .unauthorized: "unauthorized"
+        case .poweredOff: "poweredOff"
+        case .poweredOn: "poweredOn"
+        @unknown default:
+            fatalError()
+        }
+    }
+}
+
 public struct BluetoothManager {
     
-    var create: (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action, Never> = { _, _, _ in
+    var create: (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action> = { _, _, _ in
         _unimplemented("create")
     }
     
-    var destroy: (AnyHashable) -> Effect<Never, Never> = { _ in
+    var destroy: (AnyHashable) -> Effect<Never> = { _ in
         _unimplemented("destroy")
     }
     
-    var connect: (AnyHashable, Peripheral.State, ConnectionOptions?) -> Effect<Never, Never> = { _, _, _ in
+    var connect: (AnyHashable, Peripheral.State, ConnectionOptions?) -> Effect<Never> = { _, _, _ in
         _unimplemented("connect")
     }
     
-    var cancelConnection: (AnyHashable, Peripheral.State) -> Effect<Never, Never> = { _, _ in
+    var cancelConnection: (AnyHashable, Peripheral.State) -> Effect<Never> = { _, _ in
         _unimplemented("cancelConnection")
     }
     
@@ -36,11 +51,11 @@ public struct BluetoothManager {
         _unimplemented("retrievePeripherals")
     }
     
-    var scanForPeripherals: (AnyHashable, [CBUUID]?, ScanOptions?) -> Effect<Never, Never> = { _, _, _ in
+    var scanForPeripherals: (AnyHashable, [CBUUID]?, ScanOptions?) -> Effect<Never> = { _, _, _ in
         _unimplemented("scanForPeripherals")
     }
     
-    var stopScan: (AnyHashable) -> Effect<Never, Never> = { _ in
+    var stopScan: (AnyHashable) -> Effect<Never> = { _ in
         _unimplemented("stopScan")
     }
     
@@ -57,7 +72,7 @@ public struct BluetoothManager {
     }
     
     @available(macOS, unavailable)
-    var registerForConnectionEvents: (AnyHashable, ConnectionEventOptions?) -> Effect<Never, Never> = { _, _ in
+    var registerForConnectionEvents: (AnyHashable, ConnectionEventOptions?) -> Effect<Never> = { _, _ in
         _unimplemented("registerForConnectionEvents")
     }
     
@@ -68,19 +83,19 @@ public struct BluetoothManager {
 }
 
 extension BluetoothManager {
-    public func create(id: AnyHashable, queue: DispatchQueue? = nil, options: InitializationOptions? = nil) -> Effect<Action, Never> {
+    public func create(id: AnyHashable, queue: DispatchQueue? = nil, options: InitializationOptions? = nil) -> Effect<Action> {
         create(id, queue, options)
     }
     
-    public func destroy(id: AnyHashable) -> Effect<Never, Never> {
+    public func destroy(id: AnyHashable) -> Effect<Never> {
         destroy(id)
     }
     
-    public func connect(id: AnyHashable, to peripheral: Peripheral.State, options: ConnectionOptions? = nil) -> Effect<Never, Never> {
+    public func connect(id: AnyHashable, to peripheral: Peripheral.State, options: ConnectionOptions? = nil) -> Effect<Never> {
         connect(id, peripheral, options)
     }
     
-    public func cancelConnection(id: AnyHashable, with peripheral: Peripheral.State) -> Effect<Never, Never> {
+    public func cancelConnection(id: AnyHashable, with peripheral: Peripheral.State) -> Effect<Never> {
         cancelConnection(id, peripheral)
     }
     
@@ -92,11 +107,11 @@ extension BluetoothManager {
         retrievePeripherals(id, identifiers)
     }
     
-    public func scanForPeripherals(id: AnyHashable, services: [CBUUID]? = nil, options: ScanOptions? = nil) -> Effect<Never, Never> {
+    public func scanForPeripherals(id: AnyHashable, services: [CBUUID]? = nil, options: ScanOptions? = nil) -> Effect<Never> {
         scanForPeripherals(id, services, options)
     }
     
-    public func stopScan(id: AnyHashable) -> Effect<Never, Never> {
+    public func stopScan(id: AnyHashable) -> Effect<Never> {
         stopScan(id)
     }
     
@@ -119,7 +134,7 @@ extension BluetoothManager {
     }
     
     @available(macOS, unavailable)
-    public func registerForConnectionEvents(id: AnyHashable, options: ConnectionEventOptions? = nil) -> Effect<Never, Never> {
+    public func registerForConnectionEvents(id: AnyHashable, options: ConnectionEventOptions? = nil) -> Effect<Never> {
         registerForConnectionEvents(id, options)
     }
 }

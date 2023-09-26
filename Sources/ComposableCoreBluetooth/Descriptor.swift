@@ -9,11 +9,11 @@
 import Foundation
 import CoreBluetooth
 
-public struct Descriptor: Equatable {
+public struct Descriptor: Equatable, Hashable {
     
     let rawValue: CBDescriptor?
     public let identifier: CBUUID
-    public let characteristic: Characteristic
+    public let characteristic: Characteristic?
     public var value: Value?
     
     init(from descriptor: CBDescriptor) {
@@ -53,7 +53,7 @@ extension Descriptor {
 
 extension Descriptor {
     
-    public enum Value: Equatable {
+    public enum Value: Equatable, Hashable {
         case characteristicExtendedProperties(NSNumber?)
         case characteristicUserDescription(String?)
         case clientCharacteristicConfiguration(NSNumber?)

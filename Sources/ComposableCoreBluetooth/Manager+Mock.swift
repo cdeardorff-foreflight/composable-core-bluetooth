@@ -15,16 +15,16 @@ extension BluetoothManager {
     
     @available(macOS, unavailable)
     public static func mock(
-        create: @escaping (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action, Never> = { _, _, _ in
+        create: @escaping (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action> = { _, _, _ in
             _unimplemented("create")
         },
-        destroy: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
+        destroy: @escaping (AnyHashable) -> Effect<Never> = { _ in
             _unimplemented("destroy")
         },
-        connect: @escaping (AnyHashable, Peripheral.State, ConnectionOptions?) -> Effect<Never, Never> = { _, _, _ in
+        connect: @escaping (AnyHashable, Peripheral.State, ConnectionOptions?) -> Effect<Never> = { _, _, _ in
             _unimplemented("connect")
         },
-        cancelConnection: @escaping (AnyHashable, Peripheral.State) -> Effect<Never, Never> = { _, _ in
+        cancelConnection: @escaping (AnyHashable, Peripheral.State) -> Effect<Never> = { _, _ in
             _unimplemented("cancelConnection")
         },
         retrieveConnectedPeripherals: @escaping (AnyHashable, [CBUUID]) -> [Peripheral.State] = { _, _ in
@@ -33,10 +33,10 @@ extension BluetoothManager {
         retrievePeripherals: @escaping (AnyHashable, [UUID]) -> [Peripheral.State] = { _, _ in
             _unimplemented("retrievePeripherals")
         },
-        scanForPeripherals: @escaping (AnyHashable, [CBUUID]?, ScanOptions?) -> Effect<Never, Never> = { _, _, _ in
+        scanForPeripherals: @escaping (AnyHashable, [CBUUID]?, ScanOptions?) -> Effect<Never> = { _, _, _ in
             _unimplemented("scanForPeripherals")
         },
-        stopScan: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
+        stopScan: @escaping (AnyHashable) -> Effect<Never> = { _ in
             _unimplemented("stopScan")
         },
         state: @escaping (AnyHashable) -> CBManagerState = { _ in
@@ -48,7 +48,7 @@ extension BluetoothManager {
         authorization: @escaping () -> CBManagerAuthorization = {
             _unimplemented("authorization")
         },
-        registerForConnectionEvents: @escaping (AnyHashable, ConnectionEventOptions?) -> Effect<Never, Never> = { _, _ in
+        registerForConnectionEvents: @escaping (AnyHashable, ConnectionEventOptions?) -> Effect<Never> = { _, _ in
             _unimplemented("registerForConnectionEvents")
         },
         supports: @escaping (CBCentralManager.Feature) -> Bool = { _ in
@@ -74,16 +74,16 @@ extension BluetoothManager {
     
     @available(macOS, unavailable)
     public static func failing(
-        create: @escaping (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action, Never> = { _, _, _ in
+        create: @escaping (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action> = { _, _, _ in
             .failing("create")
         },
-        destroy: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
+        destroy: @escaping (AnyHashable) -> Effect<Never> = { _ in
             .failing("destroy")
         },
-        connect: @escaping (AnyHashable, Peripheral.State, ConnectionOptions?) -> Effect<Never, Never> = { _, _, _ in
+        connect: @escaping (AnyHashable, Peripheral.State, ConnectionOptions?) -> Effect<Never> = { _, _, _ in
             .failing("connect")
         },
-        cancelConnection: @escaping (AnyHashable, Peripheral.State) -> Effect<Never, Never> = { _, _ in
+        cancelConnection: @escaping (AnyHashable, Peripheral.State) -> Effect<Never> = { _, _ in
             .failing("cancelConnection")
         },
         retrieveConnectedPeripherals: @escaping (AnyHashable, [CBUUID]) -> [Peripheral.State] = { _, _ in
@@ -94,10 +94,10 @@ extension BluetoothManager {
             fail("retrievePeripherals")
             return []
         },
-        scanForPeripherals: @escaping (AnyHashable, [CBUUID]?, ScanOptions?) -> Effect<Never, Never> = { _, _, _ in
+        scanForPeripherals: @escaping (AnyHashable, [CBUUID]?, ScanOptions?) -> Effect<Never> = { _, _, _ in
             .failing("scanForPeripherals")
         },
-        stopScan: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
+        stopScan: @escaping (AnyHashable) -> Effect<Never> = { _ in
             .failing("stopScan")
         },
         state: @escaping (AnyHashable) -> CBManagerState = { _ in
@@ -112,7 +112,7 @@ extension BluetoothManager {
             fail("authorization")
             return .notDetermined
         },
-        registerForConnectionEvents: @escaping (AnyHashable, ConnectionEventOptions?) -> Effect<Never, Never> = { _, _ in
+        registerForConnectionEvents: @escaping (AnyHashable, ConnectionEventOptions?) -> Effect<Never> = { _, _ in
             .failing("registerForConnectionEvents")
         },
         supports: @escaping (CBCentralManager.Feature) -> Bool = { _ in
@@ -138,16 +138,16 @@ extension BluetoothManager {
     }
     
     public static func mock(
-        create: @escaping (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action, Never> = { _, _, _ in
+        create: @escaping (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action> = { _, _, _ in
             _unimplemented("create")
         },
-        destroy: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
+        destroy: @escaping (AnyHashable) -> Effect<Never> = { _ in
             _unimplemented("destroy")
         },
-        connect: @escaping (AnyHashable, Peripheral.State, ConnectionOptions?) -> Effect<Never, Never> = { _, _, _ in
+        connect: @escaping (AnyHashable, Peripheral.State, ConnectionOptions?) -> Effect<Never> = { _, _, _ in
             _unimplemented("connect")
         },
-        cancelConnection: @escaping (AnyHashable, Peripheral.State) -> Effect<Never, Never> = { _, _ in
+        cancelConnection: @escaping (AnyHashable, Peripheral.State) -> Effect<Never> = { _, _ in
             _unimplemented("cancelConnection")
         },
         retrieveConnectedPeripherals: @escaping (AnyHashable, [CBUUID]) -> [Peripheral.State] = { _, _ in
@@ -156,10 +156,10 @@ extension BluetoothManager {
         retrievePeripherals: @escaping (AnyHashable, [UUID]) -> [Peripheral.State] = { _, _ in
             _unimplemented("retrievePeripherals")
         },
-        scanForPeripherals: @escaping (AnyHashable, [CBUUID]?, ScanOptions?) -> Effect<Never, Never> = { _, _, _ in
+        scanForPeripherals: @escaping (AnyHashable, [CBUUID]?, ScanOptions?) -> Effect<Never> = { _, _, _ in
             _unimplemented("scanForPeripherals")
         },
-        stopScan: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
+        stopScan: @escaping (AnyHashable) -> Effect<Never> = { _ in
             _unimplemented("stopScan")
         },
         state: @escaping (AnyHashable) -> CBManagerState = { _ in
@@ -188,16 +188,16 @@ extension BluetoothManager {
     }
     
     public static func failing(
-        create: @escaping (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action, Never> = { _, _, _ in
+        create: @escaping (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action> = { _, _, _ in
             .failing("create")
         },
-        destroy: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
+        destroy: @escaping (AnyHashable) -> Effect<Never> = { _ in
             .failing("destroy")
         },
-        connect: @escaping (AnyHashable, Peripheral.State, ConnectionOptions?) -> Effect<Never, Never> = { _, _, _ in
+        connect: @escaping (AnyHashable, Peripheral.State, ConnectionOptions?) -> Effect<Never> = { _, _, _ in
             .failing("connect")
         },
-        cancelConnection: @escaping (AnyHashable, Peripheral.State) -> Effect<Never, Never> = { _, _ in
+        cancelConnection: @escaping (AnyHashable, Peripheral.State) -> Effect<Never> = { _, _ in
             .failing("cancelConnection")
         },
         retrieveConnectedPeripherals: @escaping (AnyHashable, [CBUUID]) -> [Peripheral.State] = { _, _ in
@@ -208,10 +208,10 @@ extension BluetoothManager {
             fail("retrievePeripherals")
             return []
         },
-        scanForPeripherals: @escaping (AnyHashable, [CBUUID]?, ScanOptions?) -> Effect<Never, Never> = { _, _, _ in
+        scanForPeripherals: @escaping (AnyHashable, [CBUUID]?, ScanOptions?) -> Effect<Never> = { _, _, _ in
             .failing("scanForPeripherals")
         },
-        stopScan: @escaping (AnyHashable) -> Effect<Never, Never> = { _ in
+        stopScan: @escaping (AnyHashable) -> Effect<Never> = { _ in
             .failing("stopScan")
         },
         state: @escaping (AnyHashable) -> CBManagerState = { _ in

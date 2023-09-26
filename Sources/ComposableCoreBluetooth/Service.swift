@@ -9,6 +9,17 @@
 import Foundation
 import CoreBluetooth
 
+extension Service: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(rawValue)
+        hasher.combine(identifier)
+        hasher.combine(isPrimary)
+        // including everything but characteristics
+        // hasher.combine(characteristics)
+        hasher.combine(includedServices)
+    }
+}
+
 public struct Service {
 
     let rawValue: CBService?
@@ -36,6 +47,14 @@ public struct Service {
         self.isPrimary = isPrimary
         self.characteristics = characteristics
         self.includedServices = includedServices
+    }
+}
+
+extension Service {
+    
+    init?(from service: CBService?) {
+        guard let service else { return nil }
+        self.init(from: service)
     }
 }
 

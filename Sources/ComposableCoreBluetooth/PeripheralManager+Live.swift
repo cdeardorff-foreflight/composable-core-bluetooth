@@ -21,7 +21,7 @@ private var dependencies: [AnyHashable: Dependencies] = [:]
 private struct Dependencies {
     let manager: CBPeripheralManager
     let delegate: PeripheralManager.Delegate
-    let subscriber: Effect<PeripheralManager.Action, Never>.Subscriber
+    let subscriber: Effect<PeripheralManager.Action>.Subscriber
 }
 
 @available(tvOS, unavailable)
@@ -137,9 +137,9 @@ extension PeripheralManager {
     
     class Delegate: NSObject, CBPeripheralManagerDelegate {
         
-        let subscriber: Effect<PeripheralManager.Action, Never>.Subscriber
+        let subscriber: Effect<PeripheralManager.Action>.Subscriber
         
-        init(_ subscriber: Effect<PeripheralManager.Action, Never>.Subscriber) {
+        init(_ subscriber: Effect<PeripheralManager.Action>.Subscriber) {
             self.subscriber = subscriber
         }
         

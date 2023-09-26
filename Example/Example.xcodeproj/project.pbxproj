@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -13,6 +13,7 @@
 		250D68AE255313B2005FFE14 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 250D68AD255313B2005FFE14 /* Preview Assets.xcassets */; };
 		250D68B9255313B2005FFE14 /* ExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 250D68B8255313B2005FFE14 /* ExampleTests.swift */; };
 		250D68C4255313B2005FFE14 /* ExampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 250D68C3255313B2005FFE14 /* ExampleUITests.swift */; };
+		CB553B662ABE43BC0039EF47 /* ComposableCoreBluetooth in Frameworks */ = {isa = PBXBuildFile; productRef = CB553B652ABE43BC0039EF47 /* ComposableCoreBluetooth */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,6 +53,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB553B662ABE43BC0039EF47 /* ComposableCoreBluetooth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -79,6 +81,7 @@
 				250D68B7255313B2005FFE14 /* ExampleTests */,
 				250D68C2255313B2005FFE14 /* ExampleUITests */,
 				250D68A4255313B0005FFE14 /* Products */,
+				CB553B642ABE43BC0039EF47 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -130,6 +133,13 @@
 			path = ExampleUITests;
 			sourceTree = "<group>";
 		};
+		CB553B642ABE43BC0039EF47 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -146,6 +156,9 @@
 			dependencies = (
 			);
 			name = Example;
+			packageProductDependencies = (
+				CB553B652ABE43BC0039EF47 /* ComposableCoreBluetooth */,
+			);
 			productName = Example;
 			productReference = 250D68A3255313B0005FFE14 /* Example.app */;
 			productType = "com.apple.product-type.application";
@@ -419,7 +432,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"Example/Preview Content\"";
-				DEVELOPMENT_TEAM = Q5MZT8NG66;
+				DEVELOPMENT_TEAM = V627MM9JR8;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Example/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
@@ -441,7 +454,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"Example/Preview Content\"";
-				DEVELOPMENT_TEAM = Q5MZT8NG66;
+				DEVELOPMENT_TEAM = V627MM9JR8;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Example/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
@@ -580,6 +593,13 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		CB553B652ABE43BC0039EF47 /* ComposableCoreBluetooth */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ComposableCoreBluetooth;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 250D689B255313B0005FFE14 /* Project object */;
 }
