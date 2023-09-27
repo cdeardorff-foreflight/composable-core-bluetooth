@@ -11,237 +11,164 @@ import CoreBluetooth
 import Combine
 import ComposableArchitecture
 
-private var dependencies: [AnyHashable: Dependencies] = [:]
-
-private struct Dependencies {
-    let manager: CBCentralManager
-    let delegate: BluetoothManager.Delegate
-    let send: Send<BluetoothManager.Action>
+private struct BluetoothManagerSendableBox: Sendable {
+    @UncheckedSendable var manager: CBCentralManager
+    var delegateStream: AsyncStream<BluetoothManager.Action>
+    var continuation: AsyncStream<BluetoothManager.Action>.Continuation
+    var delegate: BluetoothManager.Delegate
+    var scanningCancellable: AnyCancellable
 }
 
 extension BluetoothManager {
     
     private struct CreateId: Hashable { }
     
-    public static let live: BluetoothManager = { () -> BluetoothManager in
-        var manager = BluetoothManager()
+    public static func live(queue: DispatchQueue?, options: InitializationOptions?) -> BluetoothManager {
         
-        manager.create = { id, queue, options in
+        let task = Task<BluetoothManagerSendableBox, Never> { @MainActor in
             
-            return .merge(
-                .run { send in
-                    let delegate = Delegate(send)
-                    let manager = CBCentralManager(
-                        delegate: delegate,
-                        queue: queue,
-                        options: options?.toDictionary()
-                    )
-                    dependencies[id] = Dependencies(manager: manager, delegate: delegate, send: send)
-                },
-                .run { send in
-                    guard let isScanningStream = dependencies[id]?
-                        .manager
-                        .publisher(for: \.isScanning)
-                        .map(BluetoothManager.Action.didUpdateScanningState)
-                        .values
-                    else { return }
-                    
-                    for try await action in isScanningStream {
+            var continuation: AsyncStream<Action>.Continuation!
+            var stream = AsyncStream<Action> { continuation = $0 }
+            
+            let delegate = Delegate(continuation: continuation)
+            let manager = CBCentralManager(
+                delegate: delegate,
+                queue: queue,
+                options: options?.toDictionary()
+            )
+            
+            let scanningCancellable = manager
+                .publisher(for: \.isScanning)
+                .map(BluetoothManager.Action.didUpdateScanningState)
+                .sink { continuation.yield($0) }
+                
+            return .init(manager: manager, delegateStream: stream, continuation: continuation, delegate: delegate, scanningCancellable: scanningCancellable)
+        }
+        
+        return Self(
+            delegate: {
+                return .run { send in
+                    let stream = await task.value.delegateStream
+                    for try await action in stream {
                         await send(action)
                     }
                 }
-            )
-            .cancellable(id: CreateId())
-        }
-        
-        manager.destroy = { id in
-            .cancel(id: CreateId())
-        }
-        
-        manager.connect = { id, peripheral, options in
-            
-            guard let rawPeripheral = dependencies[id]?.manager.retrievePeripherals(withIdentifiers: [peripheral.identifier]).first else {
-                couldNotFindRawPeripheralValue()
-                return .none
-            }
-            
-            return .fireAndForget {
-                dependencies[id]?.manager.connect(rawPeripheral, options: options?.toDictionary())
-            }
-        }
-        
-        manager.cancelConnection = { id, peripheral  in
-            
-            guard let rawPeripheral = dependencies[id]?.manager.retrievePeripherals(withIdentifiers: [peripheral.identifier]).first else {
-                couldNotFindRawPeripheralValue()
-                return .none
-            }
-            
-            return .fireAndForget {
-                dependencies[id]?.manager.cancelPeripheralConnection(rawPeripheral)
-            }
-        }
-        
-        manager.retrieveConnectedPeripherals = { id, uuids in
-            
-            guard let dependency = dependencies[id] else {
-                couldNotFindBluetoothManager(id: id)
-                return []
-            }
-            
-            return dependency
-                .manager
-                .retrieveConnectedPeripherals(withServices: uuids)
-                .map(Peripheral.State.live)
-        }
-        
-        manager.retrievePeripherals = { id, uuids in
-            
-            guard let dependency = dependencies[id] else {
-                couldNotFindBluetoothManager(id: id)
-                return []
-            }
-            
-            return dependency
-                .manager
-                .retrievePeripherals(withIdentifiers: uuids)
-                .map(Peripheral.State.live)
-        }
-        
-        manager.scanForPeripherals = { id, services, options in
-            .fireAndForget {
-                dependencies[id]?.manager.scanForPeripherals(withServices: services, options: options?.toDictionary())
-            }
-        }
-        
-        manager.stopScan = { id in
-            .fireAndForget {
-                dependencies[id]?.manager.stopScan()
-            }
-        }
-        
-        if #available(iOS 13.1, macOS 10.15, macCatalyst 13.1, tvOS 13.0, watchOS 6.0, *) {
-            manager._authorization = {
+            },
+            connect: { peripheral, options in
+                let manager = await task.value.manager
+                guard let rawPeripheral = manager.retrievePeripherals(withIdentifiers: [peripheral.identifier]).first else {
+                    couldNotFindRawPeripheralValue()
+                    return
+                }
+                manager.connect(rawPeripheral, options: options?.toDictionary())
+            },
+            cancelConnection: { peripheral in
+                let manager = await task.value.manager
+                guard let rawPeripheral = manager.retrievePeripherals(withIdentifiers: [peripheral.identifier]).first else {
+                    couldNotFindRawPeripheralValue()
+                    return
+                }
+                manager.cancelPeripheralConnection(rawPeripheral)
+            },
+            retrieveConnectedPeripherals: { uuids in
+                return await task.value.manager
+                    .retrieveConnectedPeripherals(withServices: uuids)
+                    .map(Peripheral.State.live)
+            },
+            retrievePeripherals: { uuids in
+                return await task.value.manager
+                    .retrievePeripherals(withIdentifiers: uuids)
+                    .map(Peripheral.State.live)
+            },
+            scanForPeripherals: { services, options in
+                await task.value.manager.scanForPeripherals(withServices: services, options: options?.toDictionary())
+            },
+            stopScan: {
+                await task.value.manager.stopScan()
+            },
+            state: {
+                return await task.value.manager.state
+            },
+            peripheralEnvironment: { (uuid) -> Peripheral.Environment? in
+                let value = await task.value
+                guard let rawPeripheral = value.manager.retrievePeripherals(withIdentifiers: [uuid]).first else {
+                    couldNotFindRawPeripheralValue()
+                    return nil
+                }
+                
+                return Peripheral.Environment.live(from: rawPeripheral, continuation: value.continuation)
+            },
+            _authorization: {
                 CBCentralManager.authorization
-            }
-        }
+            },
+            registerForConnectionEvents: { options in
+                await task.value.manager.registerForConnectionEvents(options: options?.toDictionary())
+            },
         
-        manager.state = { id in
-            
-            guard let dependency = dependencies[id] else {
-                couldNotFindBluetoothManager(id: id)
-                return .unknown
-            }
-            
-            return dependency.manager.state
-        }
-        
-        manager.peripheralEnvironment = { (id, uuid) -> Peripheral.Environment? in
-            
-            guard let dependency = dependencies[id] else {
-                couldNotFindBluetoothManager(id: id)
-                return nil
-            }
-            
-            guard let rawPeripheral = dependencies[id]?.manager.retrievePeripherals(withIdentifiers: [uuid]).first else {
-                couldNotFindRawPeripheralValue()
-                return nil
-            }
-            
-            return Peripheral.Environment.live(from: rawPeripheral, send: dependency.send)
-        }
-        
-        #if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
-        manager.registerForConnectionEvents = { id, options in
-            .fireAndForget {
-                dependencies[id]?.manager.registerForConnectionEvents(options: options?.toDictionary())
-            }
-        }
-        #endif
-        
-        #if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
-        manager.supports = CBCentralManager.supports
-        #endif
-
-        return manager
-    }()
+            supports: CBCentralManager.supports
+        )
+    }
 }
 
 extension BluetoothManager {
-    class Delegate: NSObject, CBCentralManagerDelegate {
-        let send: Send<BluetoothManager.Action>
+    final class Delegate: NSObject, CBCentralManagerDelegate, Sendable {
+        let continuation: AsyncStream<BluetoothManager.Action>.Continuation
         
-        init(_ send: Send<BluetoothManager.Action>) {
-            self.send = send
+        init(continuation: AsyncStream<BluetoothManager.Action>.Continuation) {
+            self.continuation = continuation
         }
         
         func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-            Task { @MainActor in
-                send(.peripheral(peripheral.identifier, .didConnect))
-            }
+            continuation.yield(.peripheral(peripheral.identifier, .didConnect))
         }
         
         func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
-            Task { @MainActor in
-                if let error = error {
-                    if let error = error as? CBError {
-                        send(.peripheral(peripheral.identifier, .didDisconnect(.coreBluetooth(error))))
-                    } else {
-                        send(.peripheral(peripheral.identifier, .didDisconnect(.unknown(error.localizedDescription))))
-                    }
+            if let error = error {
+                if let error = error as? CBError {
+                    continuation.yield(.peripheral(peripheral.identifier, .didDisconnect(.coreBluetooth(error))))
                 } else {
-                    send(.peripheral(peripheral.identifier, .didDisconnect(.none)))
+                    continuation.yield(.peripheral(peripheral.identifier, .didDisconnect(.unknown(error.localizedDescription))))
                 }
+            } else {
+                continuation.yield(.peripheral(peripheral.identifier, .didDisconnect(.none)))
             }
         }
         
         func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
-            Task { @MainActor in
-                if let error = error {
-                    if let error = error as? CBError {
-                        send(.peripheral(peripheral.identifier, .didFailToConnect(.coreBluetooth(error))))
-                    } else {
-                        send(.peripheral(peripheral.identifier, .didFailToConnect(.unknown(error.localizedDescription))))
-                    }
+            if let error = error {
+                if let error = error as? CBError {
+                    continuation.yield(.peripheral(peripheral.identifier, .didFailToConnect(.coreBluetooth(error))))
                 } else {
-                    send(.peripheral(peripheral.identifier, .didFailToConnect(.unknown(.none))))
+                    continuation.yield(.peripheral(peripheral.identifier, .didFailToConnect(.unknown(error.localizedDescription))))
                 }
+            } else {
+                continuation.yield(.peripheral(peripheral.identifier, .didFailToConnect(.unknown(.none))))
             }
         }
-
+        
         
         func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
-            Task { @MainActor in
-                send(.didDiscover(Peripheral.State.live(from: peripheral), BluetoothManager.AdvertismentData(from: advertisementData), RSSI))
-            }
+            continuation.yield(.didDiscover(Peripheral.State.live(from: peripheral), BluetoothManager.AdvertismentData(from: advertisementData), RSSI))
         }
         
         func centralManagerDidUpdateState(_ central: CBCentralManager) {
-            Task { @MainActor in
-                send(.didUpdateState(central.state))
-            }
+            continuation.yield(.didUpdateState(central.state))
         }
         
         func centralManager(_ central: CBCentralManager, willRestoreState dict: [String: Any]) {
-            Task { @MainActor in
-                send(.willRestore(RestorationOptions(from: dict)))
-            }
+            continuation.yield(.willRestore(RestorationOptions(from: dict)))
         }
         
-        #if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
+#if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
         func centralManager(_ central: CBCentralManager, connectionEventDidOccur event: CBConnectionEvent, for peripheral: CBPeripheral) {
-            Task { @MainActor in
-                send(.peripheral(peripheral.identifier, .connectionEventDidOccur(event)))
-            }
+            continuation.yield(.peripheral(peripheral.identifier, .connectionEventDidOccur(event)))
         }
-        #endif
+#endif
         
-        #if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
+#if os(iOS) || os(watchOS) || os(tvOS) || targetEnvironment(macCatalyst)
         func centralManager(_ central: CBCentralManager, didUpdateANCSAuthorizationFor peripheral: CBPeripheral) {
-            Task { @MainActor in
-                send(.peripheral(peripheral.identifier, .didUpdateANCSAuthorization(peripheral.ancsAuthorized)))
-            }
+            continuation.yield(.peripheral(peripheral.identifier, .didUpdateANCSAuthorization(peripheral.ancsAuthorized)))
         }
-        #endif
+#endif
     }
 }

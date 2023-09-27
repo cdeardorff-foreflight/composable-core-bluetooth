@@ -27,116 +27,32 @@ extension CBManagerState: CustomStringConvertible {
 
 public struct BluetoothManager {
     
-    var create: (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action> = { _, _, _ in
-        _unimplemented("create")
-    }
+    public var delegate: @Sendable () -> Effect<Action>
     
-    var destroy: (AnyHashable) -> Effect<Never> = { _ in
-        _unimplemented("destroy")
-    }
+    public var connect: (Peripheral.State, ConnectionOptions?) async -> Void
     
-    var connect: (AnyHashable, Peripheral.State, ConnectionOptions?) -> Effect<Never> = { _, _, _ in
-        _unimplemented("connect")
-    }
+    public var cancelConnection: (Peripheral.State) async -> Void
     
-    var cancelConnection: (AnyHashable, Peripheral.State) -> Effect<Never> = { _, _ in
-        _unimplemented("cancelConnection")
-    }
+    public var retrieveConnectedPeripherals: ([CBUUID]) async -> [Peripheral.State]
     
-    var retrieveConnectedPeripherals: (AnyHashable, [CBUUID]) -> [Peripheral.State] = { _, _ in
-        _unimplemented("retrieveConnectedPeripherals")
-    }
+    public var retrievePeripherals: ([UUID]) async -> [Peripheral.State]
     
-    var retrievePeripherals: (AnyHashable, [UUID]) -> [Peripheral.State] = { _, _ in
-        _unimplemented("retrievePeripherals")
-    }
+    public var scanForPeripherals: ([CBUUID]?, ScanOptions?) async -> Void
     
-    var scanForPeripherals: (AnyHashable, [CBUUID]?, ScanOptions?) -> Effect<Never> = { _, _, _ in
-        _unimplemented("scanForPeripherals")
-    }
+    public var stopScan: () async -> Void
     
-    var stopScan: (AnyHashable) -> Effect<Never> = { _ in
-        _unimplemented("stopScan")
-    }
+    public var state: () async -> CBManagerState
     
-    var state: (AnyHashable) -> CBManagerState = { _ in
-        _unimplemented("state")
-    }
+    public var peripheralEnvironment: (UUID) async -> Peripheral.Environment?
     
-    var peripheralEnvironment: (AnyHashable, UUID) -> Peripheral.Environment? = { _, _ in
-        _unimplemented("peripheralEnvironment")
-    }
-    
-    var _authorization: () -> CBManagerAuthorization = {
-        _unimplemented("authorization")
-    }
+    public var _authorization: () -> CBManagerAuthorization
     
     @available(macOS, unavailable)
-    var registerForConnectionEvents: (AnyHashable, ConnectionEventOptions?) -> Effect<Never> = { _, _ in
-        _unimplemented("registerForConnectionEvents")
-    }
+    public var registerForConnectionEvents: (ConnectionEventOptions?) async -> Void
     
     @available(macOS, unavailable)
-    var supports: (CBCentralManager.Feature) -> Bool = { _ in
-        _unimplemented("supports")
-    }
-}
-
-extension BluetoothManager {
-    public func create(id: AnyHashable, queue: DispatchQueue? = nil, options: InitializationOptions? = nil) -> Effect<Action> {
-        create(id, queue, options)
-    }
+    public var supports: (CBCentralManager.Feature) -> Bool
     
-    public func destroy(id: AnyHashable) -> Effect<Never> {
-        destroy(id)
-    }
-    
-    public func connect(id: AnyHashable, to peripheral: Peripheral.State, options: ConnectionOptions? = nil) -> Effect<Never> {
-        connect(id, peripheral, options)
-    }
-    
-    public func cancelConnection(id: AnyHashable, with peripheral: Peripheral.State) -> Effect<Never> {
-        cancelConnection(id, peripheral)
-    }
-    
-    public func retrieveConnectedPeripherals(id: AnyHashable, services: [CBUUID]) -> [Peripheral.State] {
-        retrieveConnectedPeripherals(id, services)
-    }
-    
-    public func retrievePeripherals(id: AnyHashable, identifiers: [UUID]) -> [Peripheral.State] {
-        retrievePeripherals(id, identifiers)
-    }
-    
-    public func scanForPeripherals(id: AnyHashable, services: [CBUUID]? = nil, options: ScanOptions? = nil) -> Effect<Never> {
-        scanForPeripherals(id, services, options)
-    }
-    
-    public func stopScan(id: AnyHashable) -> Effect<Never> {
-        stopScan(id)
-    }
-    
-    public func state(id: AnyHashable) -> CBManagerState {
-        state(id)
-    }
-    
-    public func peripheralEnvironment(id: AnyHashable, for uuid: UUID) -> Peripheral.Environment? {
-        peripheralEnvironment(id, uuid)
-    }
-    
-    @available(iOS 13.1, macOS 10.15, macCatalyst 13.1, tvOS 13.0, watchOS 6.0, *)
-    public func authorization() -> CBManagerAuthorization {
-        _authorization()
-    }
-    
-    @available(macOS, unavailable)
-    public func supports(_ feature: CBCentralManager.Feature) -> Bool {
-        supports(feature)
-    }
-    
-    @available(macOS, unavailable)
-    public func registerForConnectionEvents(id: AnyHashable, options: ConnectionEventOptions? = nil) -> Effect<Never> {
-        registerForConnectionEvents(id, options)
-    }
 }
 
 extension BluetoothManager {

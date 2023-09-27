@@ -36,20 +36,18 @@ extension Peripheral.State {
 
 extension Peripheral.Environment {
     
-    static func live(from cbPeripheral: CBPeripheral, send: Send<BluetoothManager.Action>) -> Self {
+    static func live(from cbPeripheral: CBPeripheral, continuation: AsyncStream<BluetoothManager.Action>.Continuation) -> Self {
         
         var environment = Peripheral.Environment()
         
         environment.rawValue = cbPeripheral
-        environment.delegate = Delegate(send)
+        environment.delegate = Delegate(continuation)
         cbPeripheral.delegate = environment.delegate
         environment.stateCancelable = cbPeripheral
             .publisher(for: \.state)
-            .sink(receiveValue: { state in
-                Task { @MainActor in
-                    send(.peripheral(cbPeripheral.identifier, .didUpdateState(state)))
-                }
-            })
+            .sink { state in
+                continuation.yield(.peripheral(cbPeripheral.identifier, .didUpdateState(state)))
+            }
         
         environment.readRSSI = {
             .fireAndForget { cbPeripheral.readRSSI() }
@@ -147,189 +145,160 @@ extension Peripheral.Environment {
     }
     
     class Delegate: NSObject, CBPeripheralDelegate {
-        let send: Send<BluetoothManager.Action>
+        let continuation: AsyncStream<BluetoothManager.Action>.Continuation
         
-        init(_ send: Send<BluetoothManager.Action>) {
-            self.send = send
+        init(_ continuation: AsyncStream<BluetoothManager.Action>.Continuation) {
+            self.continuation = continuation
         }
         
         func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-            Task { @MainActor in
-                send(
-                    .peripheral(
+            continuation.yield(
+                .peripheral(
                     peripheral.identifier,
                     .didDiscoverServices(convertToResult(peripheral.services?.map(Service.init(from:)) ?? [], error: error))
-                    )
                 )
-            }
+            )
         }
         
         func peripheral(_ peripheral: CBPeripheral, didDiscoverIncludedServicesFor service: CBService, error: Error?) {
-            Task { @MainActor in
-                send(
-                    .peripheral(
-                        peripheral.identifier,
-                        .service(
-                            service.uuid,
-                            .didDiscoverIncludedServices(convertToResult(service.includedServices?.map(Service.init) ?? [], error: error))
-                        )
+            continuation.yield(
+                .peripheral(
+                    peripheral.identifier,
+                    .service(
+                        service.uuid,
+                        .didDiscoverIncludedServices(convertToResult(service.includedServices?.map(Service.init) ?? [], error: error))
                     )
                 )
-            }
+            )
         }
         
         func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-            Task { @MainActor in
-                send(
-                    .peripheral(
-                        peripheral.identifier,
-                        .service(
-                            service.uuid,
-                            .didDiscoverCharacteristics(convertToResult(service.characteristics?.map(Characteristic.init) ?? [], error: error))
-                        )
+            continuation.yield(
+                .peripheral(
+                    peripheral.identifier,
+                    .service(
+                        service.uuid,
+                        .didDiscoverCharacteristics(convertToResult(service.characteristics?.map(Characteristic.init) ?? [], error: error))
                     )
                 )
-            }
+            )
         }
         
         func peripheral(_ peripheral: CBPeripheral, didDiscoverDescriptorsFor characteristic: CBCharacteristic, error: Error?) {
-            Task { @MainActor in
-                send(
-                    .peripheral(
-                        peripheral.identifier,
-                        .characteristic(
-                            characteristic.uuid,
-                            .didDiscoverDescriptors(convertToResult(characteristic.descriptors?.map(Descriptor.init) ?? [], error: error))
-                        )
+            continuation.yield(
+                .peripheral(
+                    peripheral.identifier,
+                    .characteristic(
+                        characteristic.uuid,
+                        .didDiscoverDescriptors(convertToResult(characteristic.descriptors?.map(Descriptor.init) ?? [], error: error))
                     )
                 )
-            }
+            )
         }
         
         func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
-            Task { @MainActor in
-                send(
-                    .peripheral(
-                        peripheral.identifier,
-                        .characteristic(
-                            characteristic.uuid,
-                            .didUpdateValue(convertToResult(characteristic.value, error: error))
-                        )
+            continuation.yield(
+                .peripheral(
+                    peripheral.identifier,
+                    .characteristic(
+                        characteristic.uuid,
+                        .didUpdateValue(convertToResult(characteristic.value, error: error))
                     )
                 )
-            }
+            )
         }
         
         func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor descriptor: CBDescriptor, error: Error?) {
-            Task { @MainActor in
-                send(
-                    .peripheral(
-                        peripheral.identifier,
-                        .descriptor(
-                            descriptor.uuid,
-                            .didUpdateValue(convertToResult(Descriptor.anyToValue(uuid: descriptor.uuid, descriptor.value), error: error))
-                        )
+            continuation.yield(
+                .peripheral(
+                    peripheral.identifier,
+                    .descriptor(
+                        descriptor.uuid,
+                        .didUpdateValue(convertToResult(Descriptor.anyToValue(uuid: descriptor.uuid, descriptor.value), error: error))
                     )
                 )
-            }
+            )
         }
         
         func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
-            Task { @MainActor in
-                send(
-                    .peripheral(
-                        peripheral.identifier,
-                        .characteristic(
-                            characteristic.uuid,
-                            .didWriteValue(convertToResult(characteristic.value, error: error))
-                        )
+            continuation.yield(
+                .peripheral(
+                    peripheral.identifier,
+                    .characteristic(
+                        characteristic.uuid,
+                        .didWriteValue(convertToResult(characteristic.value, error: error))
                     )
                 )
-            }
+            )
         }
         
         func peripheral(_ peripheral: CBPeripheral, didWriteValueFor descriptor: CBDescriptor, error: Error?) {
-            Task { @MainActor in
-                send(
-                    .peripheral(
-                        peripheral.identifier,
-                        .descriptor(
-                            descriptor.uuid,
-                            .didWriteValue(convertToResult(Descriptor.anyToValue(uuid: descriptor.uuid, descriptor.value), error: error))
-                        )
+            continuation.yield(
+                .peripheral(
+                    peripheral.identifier,
+                    .descriptor(
+                        descriptor.uuid,
+                        .didWriteValue(convertToResult(Descriptor.anyToValue(uuid: descriptor.uuid, descriptor.value), error: error))
                     )
                 )
-            }
+            )
         }
         
         func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) {
-            Task { @MainActor in
-                send(
-                    .peripheral(
-                        peripheral.identifier,
-                        .isReadyToSendWriteWithoutResponse
-                    )
+            continuation.yield(
+                .peripheral(
+                    peripheral.identifier,
+                    .isReadyToSendWriteWithoutResponse
                 )
-            }
+            )
         }
         
         func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
-            
-            Task { @MainActor in
-                send(
-                    .peripheral(
-                        peripheral.identifier,
-                        .characteristic(
-                            characteristic.uuid,
-                            .didUpdateNotificationState(convertToResult(characteristic.isNotifying, error: error))
-                        )
+            continuation.yield(
+                .peripheral(
+                    peripheral.identifier,
+                    .characteristic(
+                        characteristic.uuid,
+                        .didUpdateNotificationState(convertToResult(characteristic.isNotifying, error: error))
                     )
                 )
-            }
+            )
         }
         
         func peripheral(_ peripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
-            Task { @MainActor in
-                send(
-                    .peripheral(
-                        peripheral.identifier,
-                        .didReadRSSI(convertToResult(RSSI, error: error))
-                    )
+            continuation.yield(
+                .peripheral(
+                    peripheral.identifier,
+                    .didReadRSSI(convertToResult(RSSI, error: error))
                 )
-            }
+            )
         }
         
         func peripheralDidUpdateName(_ peripheral: CBPeripheral) {
-            Task { @MainActor in
-                send(
-                    .peripheral(
-                        peripheral.identifier,
-                        .didUpdateName(peripheral.name)
-                    )
+            continuation.yield(
+                .peripheral(
+                    peripheral.identifier,
+                    .didUpdateName(peripheral.name)
                 )
-            }
+            )
         }
         
         func peripheral(_ peripheral: CBPeripheral, didModifyServices invalidatedServices: [CBService]) {
-            Task { @MainActor in
-                send(
-                    .peripheral(
-                        peripheral.identifier,
-                        .didModifyServices(invalidatedServices.map(Service.init))
-                    )
+            continuation.yield(
+                .peripheral(
+                    peripheral.identifier,
+                    .didModifyServices(invalidatedServices.map(Service.init))
                 )
-            }
+            )
         }
         
         func peripheral(_ peripheral: CBPeripheral, didOpen channel: CBL2CAPChannel?, error: Error?) {
-            Task { @MainActor in
-                send(
-                    .peripheral(
-                        peripheral.identifier,
-                        .didOpenL2CAPChannel(convertToResult(channel, error: error))
-                    )
+            continuation.yield(
+                .peripheral(
+                    peripheral.identifier,
+                    .didOpenL2CAPChannel(convertToResult(channel, error: error))
                 )
-            }
+            )
         }
     }
 }
