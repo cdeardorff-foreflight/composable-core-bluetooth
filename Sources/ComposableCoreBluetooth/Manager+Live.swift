@@ -11,51 +11,49 @@ import CoreBluetooth
 import Combine
 import ComposableArchitecture
 
-private struct BluetoothManagerSendableBox: Sendable {
-    @UncheckedSendable var manager: CBCentralManager
-    var delegateStream: AsyncStream<BluetoothManager.Action>
-    var continuation: AsyncStream<BluetoothManager.Action>.Continuation
-    var delegate: BluetoothManager.Delegate
-    var scanningCancellable: AnyCancellable
+private class DelegateRetainingCBCentralManager: CBCentralManager {
+    
+    private let retainedDelegate: CBCentralManagerDelegate?
+    
+    override init(delegate: CBCentralManagerDelegate?, queue: dispatch_queue_t?, options: [String : Any]? = nil) {
+        self.retainedDelegate = delegate
+        super.init(delegate: delegate, queue: queue, options: options)
+    }
 }
 
 extension BluetoothManager {
-    
-    private struct CreateId: Hashable { }
-    
-    public static func live(queue: DispatchQueue?, options: InitializationOptions?) -> BluetoothManager {
         
-        let task = Task<BluetoothManagerSendableBox, Never> { @MainActor in
-            
-            var continuation: AsyncStream<Action>.Continuation!
-            var stream = AsyncStream<Action> { continuation = $0 }
-            
-            let delegate = Delegate(continuation: continuation)
-            let manager = CBCentralManager(
-                delegate: delegate,
-                queue: queue,
-                options: options?.toDictionary()
-            )
-            
-            let scanningCancellable = manager
-                .publisher(for: \.isScanning)
-                .map(BluetoothManager.Action.didUpdateScanningState)
-                .sink { continuation.yield($0) }
-                
-            return .init(manager: manager, delegateStream: stream, continuation: continuation, delegate: delegate, scanningCancellable: scanningCancellable)
-        }
+    public static func live(queue: DispatchQueue?, options: InitializationOptions?) -> BluetoothManager {
+        var continuation: AsyncStream<Action>.Continuation!
+        let stream = AsyncStream<Action> { continuation = $0 }
+        
+        let delegate = Delegate(continuation: continuation)
+        let manager = DelegateRetainingCBCentralManager(
+            delegate: delegate,
+            queue: queue,
+            options: options?.toDictionary()
+        )
         
         return Self(
             delegate: {
-                return .run { send in
-                    let stream = await task.value.delegateStream
-                    for try await action in stream {
-                        await send(action)
+                return .merge(
+                    .run { send in
+                        for try await action in stream {
+                            await send(action)
+                        }
+                    },
+                    .run { send in
+                        let isScanningStream = manager
+                            .publisher(for: \.isScanning)
+                            .map(BluetoothManager.Action.didUpdateScanningState)
+                            .values
+                        for try await action in isScanningStream {
+                            await send(action)
+                        }
                     }
-                }
+                )
             },
             connect: { peripheral, options in
-                let manager = await task.value.manager
                 guard let rawPeripheral = manager.retrievePeripherals(withIdentifiers: [peripheral.identifier]).first else {
                     couldNotFindRawPeripheralValue()
                     return
@@ -63,7 +61,6 @@ extension BluetoothManager {
                 manager.connect(rawPeripheral, options: options?.toDictionary())
             },
             cancelConnection: { peripheral in
-                let manager = await task.value.manager
                 guard let rawPeripheral = manager.retrievePeripherals(withIdentifiers: [peripheral.identifier]).first else {
                     couldNotFindRawPeripheralValue()
                     return
@@ -71,51 +68,53 @@ extension BluetoothManager {
                 manager.cancelPeripheralConnection(rawPeripheral)
             },
             retrieveConnectedPeripherals: { uuids in
-                return await task.value.manager
+                return manager
                     .retrieveConnectedPeripherals(withServices: uuids)
                     .map(Peripheral.State.live)
             },
             retrievePeripherals: { uuids in
-                return await task.value.manager
+                return manager
                     .retrievePeripherals(withIdentifiers: uuids)
                     .map(Peripheral.State.live)
             },
             scanForPeripherals: { services, options in
-                await task.value.manager.scanForPeripherals(withServices: services, options: options?.toDictionary())
+                manager.scanForPeripherals(withServices: services, options: options?.toDictionary())
             },
             stopScan: {
-                await task.value.manager.stopScan()
+                manager.stopScan()
             },
             state: {
-                return await task.value.manager.state
+                manager.state
             },
             peripheralEnvironment: { (uuid) -> Peripheral.Environment? in
-                let value = await task.value
-                guard let rawPeripheral = value.manager.retrievePeripherals(withIdentifiers: [uuid]).first else {
+                guard let rawPeripheral = manager.retrievePeripherals(withIdentifiers: [uuid]).first else {
                     couldNotFindRawPeripheralValue()
                     return nil
                 }
                 
-                return Peripheral.Environment.live(from: rawPeripheral, continuation: value.continuation)
+                return Peripheral.Environment.live(from: rawPeripheral, continuation: continuation)
             },
             _authorization: {
                 CBCentralManager.authorization
             },
             registerForConnectionEvents: { options in
-                await task.value.manager.registerForConnectionEvents(options: options?.toDictionary())
+                manager.registerForConnectionEvents(options: options?.toDictionary())
             },
-        
             supports: CBCentralManager.supports
         )
     }
 }
 
 extension BluetoothManager {
-    final class Delegate: NSObject, CBCentralManagerDelegate, Sendable {
+    class Delegate: NSObject, CBCentralManagerDelegate {
         let continuation: AsyncStream<BluetoothManager.Action>.Continuation
         
         init(continuation: AsyncStream<BluetoothManager.Action>.Continuation) {
             self.continuation = continuation
+        }
+        
+        deinit {
+            assertionFailure()
         }
         
         func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
