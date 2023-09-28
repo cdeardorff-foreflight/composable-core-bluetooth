@@ -9,9 +9,9 @@
 import Foundation
 import CoreBluetooth
 
-public struct MutableService {
+public struct MutableService: Sendable {
     
-    public var type: CBUUID
+    public var type: UUID
     public var isPrimary: Bool
     public var characteristics: [MutableCharacteristic]?
     public var includedServices: [MutableService]?
@@ -22,7 +22,7 @@ public struct MutableService {
         characteristics: [MutableCharacteristic]?,
         includedServices: [MutableService]?
     ) {
-        self.type = type
+        self.type = type.uuidValue
         self.isPrimary = isPrimary
         self.characteristics = characteristics
         self.includedServices = includedServices
@@ -31,7 +31,7 @@ public struct MutableService {
     @available(tvOS, unavailable)
     @available(watchOS, unavailable)
     var cbMutableService: CBMutableService {
-        let service = CBMutableService(type: type, primary: isPrimary)
+        let service = CBMutableService(type: type.cbUUID, primary: isPrimary)
         service.characteristics = characteristics?.map(\.cbMutableCharacteristic)
         service.includedServices = includedServices?.map(\.cbMutableService)
         return service

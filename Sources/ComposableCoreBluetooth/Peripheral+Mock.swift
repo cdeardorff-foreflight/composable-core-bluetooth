@@ -56,17 +56,17 @@ import class Combine.AnyCancellable
 extension Peripheral.Environment {
     
     public static func mock(
-        readRSSI: @escaping () -> Effect<Never> = { _unimplemented("readRSSI") },
-        discoverServices: @escaping ([CBUUID]?) -> Effect<Never> = { _ in _unimplemented("discoverServices") },
-        discoverIncludedServices: @escaping ([CBUUID]?, Service) -> Effect<Never> = { _, _ in _unimplemented("discoverIncludedServices") },
-        discoverCharacteristics: @escaping ([CBUUID]?, Service) -> Effect<Never> = { _, _ in _unimplemented("discoverCharacteristics") },
-        discoverDescriptors: @escaping (Characteristic) -> Effect<Never> = { _ in _unimplemented("discoverDescriptors") },
-        readCharacteristicValue: @escaping (Characteristic) -> Effect<Never> = { _ in _unimplemented("readCharacteristicValue")},
-        readDescriptorValue: @escaping (Descriptor) -> Effect<Never> = { _ in _unimplemented("readDescriptorValue") },
-        writeCharacteristicValue: @escaping (Data, Characteristic, CBCharacteristicWriteType) -> Effect<Never> = { _, _, _ in _unimplemented("writeCharacteristicValue") },
-        writeDescriptorValue: @escaping (Data, Descriptor) -> Effect<Never> = { _, _ in _unimplemented("writeDescriptorValue") },
-        setNotifyValue: @escaping (Bool, Characteristic) -> Effect<Never> = { _, _ in _unimplemented("setNotifyValue") },
-        openL2CAPChannel: @escaping (CBL2CAPPSM) -> Effect<Never> = { _ in _unimplemented("openL2CAPChannel") },
+        readRSSI: @escaping () async -> Void = { _unimplemented("readRSSI") },
+        discoverServices: @escaping ([CBUUID]?) async -> Void = { _ in _unimplemented("discoverServices") },
+        discoverIncludedServices: @escaping ([CBUUID]?, Service) async -> Void = { _, _ in _unimplemented("discoverIncludedServices") },
+        discoverCharacteristics: @escaping ([CBUUID]?, Service) async -> Void = { _, _ in _unimplemented("discoverCharacteristics") },
+        discoverDescriptors: @escaping (Characteristic) async -> Void = { _ in _unimplemented("discoverDescriptors") },
+        readCharacteristicValue: @escaping (Characteristic) async -> Void = { _ in _unimplemented("readCharacteristicValue")},
+        readDescriptorValue: @escaping (Descriptor) async -> Void = { _ in _unimplemented("readDescriptorValue") },
+        writeCharacteristicValue: @escaping (Data, Characteristic, CBCharacteristicWriteType) async -> Void = { _, _, _ in _unimplemented("writeCharacteristicValue") },
+        writeDescriptorValue: @escaping (Data, Descriptor) async -> Void = { _, _ in _unimplemented("writeDescriptorValue") },
+        setNotifyValue: @escaping (Bool, Characteristic) async -> Void = { _, _ in _unimplemented("setNotifyValue") },
+        openL2CAPChannel: @escaping (CBL2CAPPSM) async -> Void = { _ in _unimplemented("openL2CAPChannel") },
         maximumWriteValueLength: @escaping (CBCharacteristicWriteType) -> Int = { _ in _unimplemented("maximumWriteValueLength") }
     ) -> Self {
         Self(
@@ -89,17 +89,17 @@ extension Peripheral.Environment {
     }
     
     public static func failing(
-        readRSSI: @escaping () -> Effect<Never> = { .failing("readRSSI") },
-        discoverServices: @escaping ([CBUUID]?) -> Effect<Never> = { _ in .failing("discoverServices") },
-        discoverIncludedServices: @escaping ([CBUUID]?, Service) -> Effect<Never> = { _, _ in .failing("discoverIncludedServices") },
-        discoverCharacteristics: @escaping ([CBUUID]?, Service) -> Effect<Never> = { _, _ in .failing("discoverCharacteristics") },
-        discoverDescriptors: @escaping (Characteristic) -> Effect<Never> = { _ in .failing("discoverDescriptors") },
-        readCharacteristicValue: @escaping (Characteristic) -> Effect<Never> = { _ in .failing("readCharacteristicValue")},
-        readDescriptorValue: @escaping (Descriptor) -> Effect<Never> = { _ in .failing("readDescriptorValue") },
-        writeCharacteristicValue: @escaping (Data, Characteristic, CBCharacteristicWriteType) -> Effect<Never> = { _, _, _ in .failing("writeCharacteristicValue") },
-        writeDescriptorValue: @escaping (Data, Descriptor) -> Effect<Never> = { _, _ in .failing("writeDescriptorValue") },
-        setNotifyValue: @escaping (Bool, Characteristic) -> Effect<Never> = { _, _ in .failing("setNotifyValue") },
-        openL2CAPChannel: @escaping (CBL2CAPPSM) -> Effect<Never> = { _ in .failing("openL2CAPChannel") },
+        readRSSI: @escaping () async -> Void = { fail("readRSSI") },
+        discoverServices: @escaping ([CBUUID]?) async -> Void = { _ in fail("discoverServices") },
+        discoverIncludedServices: @escaping ([CBUUID]?, Service) async -> Void = { _, _ in fail("discoverIncludedServices") },
+        discoverCharacteristics: @escaping ([CBUUID]?, Service) async -> Void = { _, _ in fail("discoverCharacteristics") },
+        discoverDescriptors: @escaping (Characteristic) async -> Void = { _ in fail("discoverDescriptors") },
+        readCharacteristicValue: @escaping (Characteristic) async -> Void = { _ in fail("readCharacteristicValue")},
+        readDescriptorValue: @escaping (Descriptor) async -> Void = { _ in fail("readDescriptorValue") },
+        writeCharacteristicValue: @escaping (Data, Characteristic, CBCharacteristicWriteType) async -> Void = { _, _, _ in fail("writeCharacteristicValue") },
+        writeDescriptorValue: @escaping (Data, Descriptor) async -> Void = { _, _ in fail("writeDescriptorValue") },
+        setNotifyValue: @escaping (Bool, Characteristic) async -> Void = { _, _ in fail("setNotifyValue") },
+        openL2CAPChannel: @escaping (CBL2CAPPSM) async -> Void = { _ in fail("openL2CAPChannel") },
         maximumWriteValueLength: @escaping (CBCharacteristicWriteType) -> Int = { _ in
             fail("maximumWriteValueLength")
             return 0

@@ -50,99 +50,102 @@ extension Peripheral.Environment {
             }
         
         environment.readRSSI = {
-            .fireAndForget { cbPeripheral.readRSSI() }
+            cbPeripheral.readRSSI()
         }
         
         environment.openL2CAPChannel = { psm in
-            .fireAndForget { cbPeripheral.openL2CAPChannel(psm) }
+            cbPeripheral.openL2CAPChannel(psm)
         }
-
+        
         environment.discoverServices = { ids in
-            .fireAndForget { cbPeripheral.discoverServices(ids) }
+            cbPeripheral.discoverServices(ids)
         }
         
         environment.discoverIncludedServices = { ids, service in
             
             guard let rawService = service.rawValue else {
                 couldNotFindRawServiceValue()
-                return .none
+                return
             }
             
-            return .fireAndForget { cbPeripheral.discoverIncludedServices(ids, for: rawService) }
+            cbPeripheral.discoverIncludedServices(ids, for: rawService)
         }
         
         environment.discoverCharacteristics = { ids, service in
             
             guard let rawService = service.rawValue else {
                 couldNotFindRawServiceValue()
-                return .none
+                return
             }
             
-            return .fireAndForget { cbPeripheral.discoverCharacteristics(ids, for: rawService) }
+            cbPeripheral.discoverCharacteristics(ids, for: rawService)
         }
         
         environment.discoverDescriptors = { characteristic in
             
             guard let rawCharacteristic = characteristic.rawValue else {
                 couldNotFindRawCharacteristicValue()
-                return .none
+                return
             }
             
-            return .fireAndForget { cbPeripheral.discoverDescriptors(for: rawCharacteristic) }
+            cbPeripheral.discoverDescriptors(for: rawCharacteristic)
         }
         
         environment.readCharacteristicValue = { characteristic in
             
             guard let rawCharacteristic = characteristic.rawValue else {
                 couldNotFindRawCharacteristicValue()
-                return .none
+                return
             }
             
-            return .fireAndForget { cbPeripheral.readValue(for: rawCharacteristic) }
+            cbPeripheral.readValue(for: rawCharacteristic)
         }
         
         environment.readDescriptorValue = { descriptor in
             
             guard let rawDescriptor = descriptor.rawValue else {
                 couldNotFindRawDescriptorValue()
-                return .none
+                return
             }
             
-            return .fireAndForget { cbPeripheral.readValue(for: rawDescriptor) }
+            cbPeripheral.readValue(for: rawDescriptor)
         }
         
         environment.writeCharacteristicValue = { data, characteristic, writeType in
             
             guard let rawCharacteristic = characteristic.rawValue else {
                 couldNotFindRawCharacteristicValue()
-                return .none
+                return
             }
             
-            return .fireAndForget { cbPeripheral.writeValue(data, for: rawCharacteristic, type: writeType) }
+            cbPeripheral.writeValue(data, for: rawCharacteristic, type: writeType)
         }
         
         environment.writeDescriptorValue = { data, descriptor in
             
             guard let rawDescriptor = descriptor.rawValue else {
                 couldNotFindRawDescriptorValue()
-                return .none
+                return
             }
             
-            return .fireAndForget { cbPeripheral.writeValue(data, for: rawDescriptor) }
+            cbPeripheral.writeValue(data, for: rawDescriptor)
         }
         
         environment.setNotifyValue = { value, characteristic in
             
             guard let rawCharacteristic = characteristic.rawValue else {
                 couldNotFindRawCharacteristicValue()
-                return .none
+                return
             }
             
-            return .fireAndForget { cbPeripheral.setNotifyValue(value, for: rawCharacteristic) }
+            cbPeripheral.setNotifyValue(value, for: rawCharacteristic)
         }
         
         return environment
     }
+}
+
+extension Peripheral.Environment {
     
     class Delegate: NSObject, CBPeripheralDelegate {
         let continuation: AsyncStream<BluetoothManager.Action>.Continuation
@@ -165,7 +168,7 @@ extension Peripheral.Environment {
                 .peripheral(
                     peripheral.identifier,
                     .service(
-                        service.uuid,
+                        service.uuid.uuidValue,
                         .didDiscoverIncludedServices(convertToResult(service.includedServices?.map(Service.init) ?? [], error: error))
                     )
                 )
@@ -177,7 +180,7 @@ extension Peripheral.Environment {
                 .peripheral(
                     peripheral.identifier,
                     .service(
-                        service.uuid,
+                        service.uuid.uuidValue,
                         .didDiscoverCharacteristics(convertToResult(service.characteristics?.map(Characteristic.init) ?? [], error: error))
                     )
                 )
@@ -189,7 +192,7 @@ extension Peripheral.Environment {
                 .peripheral(
                     peripheral.identifier,
                     .characteristic(
-                        characteristic.uuid,
+                        characteristic.uuid.uuidValue,
                         .didDiscoverDescriptors(convertToResult(characteristic.descriptors?.map(Descriptor.init) ?? [], error: error))
                     )
                 )
@@ -201,7 +204,7 @@ extension Peripheral.Environment {
                 .peripheral(
                     peripheral.identifier,
                     .characteristic(
-                        characteristic.uuid,
+                        characteristic.uuid.uuidValue,
                         .didUpdateValue(convertToResult(characteristic.value, error: error))
                     )
                 )
@@ -213,8 +216,8 @@ extension Peripheral.Environment {
                 .peripheral(
                     peripheral.identifier,
                     .descriptor(
-                        descriptor.uuid,
-                        .didUpdateValue(convertToResult(Descriptor.anyToValue(uuid: descriptor.uuid, descriptor.value), error: error))
+                        descriptor.uuid.uuidValue,
+                        .didUpdateValue(convertToResult(Descriptor.anyToValue(uuid: descriptor.uuid.uuidValue, descriptor.value), error: error))
                     )
                 )
             )
@@ -225,7 +228,7 @@ extension Peripheral.Environment {
                 .peripheral(
                     peripheral.identifier,
                     .characteristic(
-                        characteristic.uuid,
+                        characteristic.uuid.uuidValue,
                         .didWriteValue(convertToResult(characteristic.value, error: error))
                     )
                 )
@@ -237,8 +240,8 @@ extension Peripheral.Environment {
                 .peripheral(
                     peripheral.identifier,
                     .descriptor(
-                        descriptor.uuid,
-                        .didWriteValue(convertToResult(Descriptor.anyToValue(uuid: descriptor.uuid, descriptor.value), error: error))
+                        descriptor.uuid.uuidValue,
+                        .didWriteValue(convertToResult(Descriptor.anyToValue(uuid: descriptor.uuid.uuidValue, descriptor.value), error: error))
                     )
                 )
             )
@@ -258,7 +261,7 @@ extension Peripheral.Environment {
                 .peripheral(
                     peripheral.identifier,
                     .characteristic(
-                        characteristic.uuid,
+                        characteristic.uuid.uuidValue,
                         .didUpdateNotificationState(convertToResult(characteristic.isNotifying, error: error))
                     )
                 )
@@ -296,7 +299,7 @@ extension Peripheral.Environment {
             continuation.yield(
                 .peripheral(
                     peripheral.identifier,
-                    .didOpenL2CAPChannel(convertToResult(channel, error: error))
+                    .didOpenL2CAPChannel(convertToResult(L2CAPChannel(rawValue: channel), error: error))
                 )
             )
         }

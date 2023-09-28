@@ -8,29 +8,42 @@
 
 import Foundation
 import CoreBluetooth
+import ComposableArchitecture
 
-public struct Descriptor: Equatable, Hashable {
+extension CBUUID {
+    var uuidValue: UUID {
+        return UUID(uuidString: self.uuidString)!
+    }
+}
+
+extension UUID {
+    var cbUUID: CBUUID {
+        return .init(nsuuid: self)
+    }
+}
+
+public struct Descriptor: Equatable, Hashable, Sendable {
     
-    let rawValue: CBDescriptor?
-    public let identifier: CBUUID
+    @UncheckedSendable public private(set) var rawValue: CBDescriptor?
+    public let identifier: UUID
     public let characteristic: Characteristic?
     public var value: Value?
     
     init(from descriptor: CBDescriptor) {
         rawValue = descriptor
-        identifier = descriptor.uuid
+        identifier = descriptor.uuid.uuidValue
         characteristic = Characteristic(from: descriptor.characteristic)
         value = Self.anyToValue(uuid: identifier, descriptor.value)
     }
     
     init(identifier: CBUUID, characteristic: Characteristic, value: Value?) {
         rawValue = nil
-        self.identifier = identifier
+        self.identifier = identifier.uuidValue
         self.characteristic = characteristic
         self.value = value
     }
     
-    static func anyToValue(uuid: CBUUID, _ value: Any?) -> Value? {
+    static func anyToValue(uuid: UUID, _ value: Any?) -> Value? {
         switch uuid.uuidString {
         case CBUUIDCharacteristicExtendedPropertiesString: return .characteristicExtendedProperties(value as? NSNumber)
         case CBUUIDCharacteristicUserDescriptionString: return .characteristicUserDescription(value as? String)
@@ -45,7 +58,7 @@ public struct Descriptor: Equatable, Hashable {
 
 extension Descriptor {
     
-    public enum Action: Equatable {
+    public enum Action: Equatable, Sendable {
         case didUpdateValue(Result<Value, BluetoothError>)
         case didWriteValue(Result<Value, BluetoothError>)
     }
@@ -53,7 +66,7 @@ extension Descriptor {
 
 extension Descriptor {
     
-    public enum Value: Equatable, Hashable {
+    public enum Value: Equatable, Hashable, Sendable {
         case characteristicExtendedProperties(NSNumber?)
         case characteristicUserDescription(String?)
         case clientCharacteristicConfiguration(NSNumber?)
@@ -101,7 +114,7 @@ extension Descriptor {
 }
 
 extension Descriptor: Identifiable {
-    public var id: CBUUID {
+    public var id: UUID {
         return identifier
     }
 }

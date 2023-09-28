@@ -9,7 +9,7 @@
 import Foundation
 import CoreBluetooth
 
-public struct MutableDescriptor {
+public struct MutableDescriptor: Sendable {
     
     public var value: Descriptor.Value
     

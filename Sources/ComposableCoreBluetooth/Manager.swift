@@ -25,39 +25,88 @@ extension CBManagerState: CustomStringConvertible {
     }
 }
 
-public struct BluetoothManager {
+public struct BluetoothManager: Sendable {
     
-    public var delegate: @Sendable () -> Effect<Action>
+    public var delegate: @Sendable () async -> AsyncStream<Action>
     
-    public var connect: (Peripheral.State, ConnectionOptions?) async -> Void
+    var connect: @Sendable (Peripheral.State, ConnectionOptions?) async -> Void
     
-    public var cancelConnection: (Peripheral.State) async -> Void
+    var cancelConnection: @Sendable (Peripheral.State) async -> Void
     
-    public var retrieveConnectedPeripherals: ([CBUUID]) async -> [Peripheral.State]
+    var retrieveConnectedPeripherals: @Sendable ([CBUUID]) async -> [Peripheral.State]
     
-    public var retrievePeripherals: ([UUID]) async -> [Peripheral.State]
+    var retrievePeripherals: @Sendable ([UUID]) async -> [Peripheral.State]
     
-    public var scanForPeripherals: ([CBUUID]?, ScanOptions?) async -> Void
+    var scanForPeripherals: @Sendable ([CBUUID]?, ScanOptions?) async -> Void
     
-    public var stopScan: () async -> Void
+    var stopScan: @Sendable () async -> Void
     
-    public var state: () async -> CBManagerState
+    var state: @Sendable () async -> CBManagerState
     
-    public var peripheralEnvironment: (UUID) async -> Peripheral.Environment?
+    var peripheralEnvironment: @Sendable (UUID) async -> Peripheral.Environment?
     
-    public var _authorization: () -> CBManagerAuthorization
-    
-    @available(macOS, unavailable)
-    public var registerForConnectionEvents: (ConnectionEventOptions?) async -> Void
+    var _authorization: @Sendable () -> CBManagerAuthorization
     
     @available(macOS, unavailable)
-    public var supports: (CBCentralManager.Feature) -> Bool
+    var registerForConnectionEvents: @Sendable (ConnectionEventOptions?) async -> Void
     
+    @available(macOS, unavailable)
+    var supports: @Sendable (CBCentralManager.Feature) -> Bool
 }
 
 extension BluetoothManager {
     
-    public enum Action: Equatable {
+    public func connect(to peripheral: Peripheral.State, options: ConnectionOptions? = nil) async {
+        await connect(peripheral, options)
+    }
+    
+    public func cancelConnection(with peripheral: Peripheral.State) async {
+        await cancelConnection(peripheral)
+    }
+    
+    public func retrieveConnectedPeripherals(services: [CBUUID]) async -> [Peripheral.State] {
+        await retrieveConnectedPeripherals(services)
+    }
+    
+    public func retrievePeripherals(identifiers: [UUID]) async -> [Peripheral.State] {
+        await retrievePeripherals(identifiers)
+    }
+    
+    public func scanForPeripherals(services: [CBUUID]? = nil, options: ScanOptions? = nil) async {
+        await scanForPeripherals(services, options)
+    }
+    
+    public func stopScan() async {
+        await stopScan()
+    }
+    
+    public func state() async -> CBManagerState {
+        return await state()
+    }
+    
+    public func peripheralEnvironment(for uuid: UUID) async -> Peripheral.Environment? {
+        await peripheralEnvironment(uuid)
+    }
+    
+    @available(iOS 13.1, macOS 10.15, macCatalyst 13.1, tvOS 13.0, watchOS 6.0, *)
+    public func authorization() -> CBManagerAuthorization {
+        _authorization()
+    }
+    
+    @available(macOS, unavailable)
+    public func supports(_ feature: CBCentralManager.Feature) -> Bool {
+        supports(feature)
+    }
+    
+    @available(macOS, unavailable)
+    public func registerForConnectionEvents(options: ConnectionEventOptions? = nil) async {
+        await registerForConnectionEvents(options)
+    }
+}
+
+extension BluetoothManager {
+    
+    public enum Action: Equatable, Sendable {
         case didUpdateState(CBManagerState)
         case didUpdateScanningState(Bool)
         case didDiscover(Peripheral.State, AdvertismentData, NSNumber)
@@ -169,19 +218,19 @@ extension BluetoothManager {
         }
     }
     
-    public struct ScanOptions: Equatable {
+    public struct ScanOptions: Equatable, Sendable {
         
         let allowDuplicates: Bool?
-        let solicitedServiceUUIDs: [CBUUID]?
+        let solicitedServiceUUIDs: [UUID]?
         
         public init(allowDuplicates: Bool? = nil, solicitedServiceUUIDs: [CBUUID]? = nil) {
             self.allowDuplicates = allowDuplicates
-            self.solicitedServiceUUIDs = solicitedServiceUUIDs
+            self.solicitedServiceUUIDs = solicitedServiceUUIDs?.map(\.uuidValue)
         }
         
         init(from dictionary: [String: Any]?) {
             allowDuplicates = (dictionary?[CBCentralManagerScanOptionAllowDuplicatesKey] as? NSNumber)?.boolValue
-            solicitedServiceUUIDs = dictionary?[CBCentralManagerScanOptionSolicitedServiceUUIDsKey] as? [CBUUID]
+            solicitedServiceUUIDs = (dictionary?[CBCentralManagerScanOptionSolicitedServiceUUIDsKey] as? [CBUUID])?.map(\.uuidValue)
         }
         
         func toDictionary() -> [String: Any] {
@@ -226,27 +275,27 @@ extension BluetoothManager {
         }
     }
     
-    public struct RestorationOptions: Equatable {
+    public struct RestorationOptions: Equatable, Sendable {
         
         public let peripherals: [Peripheral.State]?
-        public let scannedServices: [CBUUID]?
+        public let scannedServices: [UUID]?
         public let scanOptions: BluetoothManager.ScanOptions?
         
         init(from dictionary: [String: Any]) {
-            scannedServices = dictionary[CBCentralManagerRestoredStateScanServicesKey] as? [CBUUID]
+            scannedServices = (dictionary[CBCentralManagerRestoredStateScanServicesKey] as? [CBUUID])?.map(\.uuidValue)
             scanOptions = ScanOptions(from: dictionary[CBCentralManagerRestoredStateScanOptionsKey] as? [String: Any])
             peripherals = (dictionary[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral])?.map(Peripheral.State.live)
         }
     }
     
-    public struct AdvertismentData: Equatable {
+    public struct AdvertismentData: Equatable, Sendable {
         
         public let localName: String?
         public let manufacturerData: Data?
-        public let serviceData: [CBUUID: Data]?
-        public let serviceUUIDs: [CBUUID]?
-        public let overflowServiceUUIDs: [CBUUID]?
-        public let solicitedServiceUUIDs: [CBUUID]?
+        public let serviceData: [UUID: Data]?
+        public let serviceUUIDs: [UUID]?
+        public let overflowServiceUUIDs: [UUID]?
+        public let solicitedServiceUUIDs: [UUID]?
         public let txPowerLevel: NSNumber?
         public let isConnectable: Bool?
         
@@ -262,10 +311,12 @@ extension BluetoothManager {
         ) {
             self.localName = localName
             self.manufacturerData = manufacturerData
-            self.serviceData = serviceData
-            self.serviceUUIDs = serviceUUIDs
-            self.overflowServiceUUIDs = overflowServiceUUIDs
-            self.solicitedServiceUUIDs = solicitedServiceUUIDs
+            self.serviceData = Dictionary(uniqueKeysWithValues: (serviceData ?? [:]).map {
+                return ($0.key.uuidValue, $0.value)
+            })
+            self.serviceUUIDs = serviceUUIDs?.map(\.uuidValue)
+            self.overflowServiceUUIDs = overflowServiceUUIDs?.map(\.uuidValue)
+            self.solicitedServiceUUIDs = solicitedServiceUUIDs?.map(\.uuidValue)
             self.txPowerLevel = txPowerLevel
             self.isConnectable = isConnectable
         }
@@ -275,10 +326,13 @@ extension BluetoothManager {
             manufacturerData = dictionary[CBAdvertisementDataManufacturerDataKey] as? Data
             txPowerLevel = dictionary[CBAdvertisementDataTxPowerLevelKey] as? NSNumber
             isConnectable = (dictionary[CBAdvertisementDataIsConnectable] as? NSNumber)?.boolValue
-            serviceData = dictionary[CBAdvertisementDataServiceDataKey] as? [CBUUID: Data]
-            serviceUUIDs = dictionary[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID]
-            overflowServiceUUIDs = dictionary[CBAdvertisementDataOverflowServiceUUIDsKey] as? [CBUUID]
-            solicitedServiceUUIDs = dictionary[CBAdvertisementDataSolicitedServiceUUIDsKey] as? [CBUUID]
+            let providedServiceData = (dictionary[CBAdvertisementDataServiceDataKey] as? [CBUUID: Data])
+            serviceData = Dictionary(uniqueKeysWithValues: (providedServiceData ?? [:]).map {
+                return ($0.key.uuidValue, $0.value)
+            })
+            serviceUUIDs = (dictionary[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID])?.map(\.uuidValue)
+            overflowServiceUUIDs = (dictionary[CBAdvertisementDataOverflowServiceUUIDsKey] as? [CBUUID])?.map(\.uuidValue)
+            solicitedServiceUUIDs = (dictionary[CBAdvertisementDataSolicitedServiceUUIDsKey] as? [CBUUID])?.map(\.uuidValue)
         }
     }
 }

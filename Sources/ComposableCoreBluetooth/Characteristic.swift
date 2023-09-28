@@ -8,14 +8,15 @@
 
 import Foundation
 import CoreBluetooth
+import ComposableArchitecture
 
 extension CBCharacteristicProperties: Hashable { }
 
-public struct Characteristic: Hashable {
+public struct Characteristic: Hashable, Sendable {
 
-    let rawValue: CBCharacteristic?
+    @UncheckedSendable public private(set) var rawValue: CBCharacteristic?
     
-    public let identifier: CBUUID
+    public let identifier: UUID
     public let service: Service?
     public let properties: CBCharacteristicProperties
     public var value: Data?
@@ -24,7 +25,7 @@ public struct Characteristic: Hashable {
 
     init(from characteristic: CBCharacteristic) {
         rawValue = characteristic
-        identifier = characteristic.uuid
+        identifier = characteristic.uuid.uuidValue
         service = Service(from: characteristic.service)
         properties = characteristic.properties
         value = characteristic.value
@@ -47,7 +48,7 @@ public struct Characteristic: Hashable {
         isNotifying: Bool
     ) {
         self.rawValue = rawValue
-        self.identifier = identifier
+        self.identifier = identifier.uuidValue
         self.service = service
         self.properties = properties
         self.value = value
@@ -58,7 +59,7 @@ public struct Characteristic: Hashable {
 
 extension Characteristic {
     
-    public enum Action: Equatable {
+    public enum Action: Equatable, Sendable {
         case didDiscoverDescriptors(Result<[Descriptor], BluetoothError>)
         case didUpdateValue(Result<Data, BluetoothError>)
         case didWriteValue(Result<Data, BluetoothError>)
@@ -89,7 +90,7 @@ extension Characteristic {
 }
 
 extension Characteristic: Identifiable {
-    public var id: CBUUID {
+    public var id: UUID {
         return identifier
     }
 }

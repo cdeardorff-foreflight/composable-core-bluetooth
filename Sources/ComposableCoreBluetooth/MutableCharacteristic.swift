@@ -9,9 +9,9 @@
 import Foundation
 import CoreBluetooth
 
-public struct MutableCharacteristic {
+public struct MutableCharacteristic: Sendable {
 
-    public var type: CBUUID
+    public var type: UUID
     public var properties: CBCharacteristicProperties
     public var value: Data?
     public var permissions: CBAttributePermissions
@@ -24,7 +24,7 @@ public struct MutableCharacteristic {
         permissions: CBAttributePermissions,
         descriptors: [MutableDescriptor]?
     ) {
-        self.type = type
+        self.type = type.uuidValue
         self.properties = properties
         self.value = value
         self.permissions = permissions
@@ -34,7 +34,7 @@ public struct MutableCharacteristic {
     @available(tvOS, unavailable)
     @available(watchOS, unavailable)
     var cbMutableCharacteristic: CBMutableCharacteristic {
-        let characteristic = CBMutableCharacteristic(type: type, properties: properties, value: value, permissions: permissions)
+        let characteristic = CBMutableCharacteristic(type: type.cbUUID, properties: properties, value: value, permissions: permissions)
         characteristic.descriptors = descriptors?.map(\.cbMutableDescriptor)
         return characteristic
     }

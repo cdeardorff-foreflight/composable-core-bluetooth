@@ -8,29 +8,19 @@
 
 import Foundation
 import CoreBluetooth
+import ComposableArchitecture
 
-extension Service: Hashable {
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(rawValue)
-        hasher.combine(identifier)
-        hasher.combine(isPrimary)
-        // including everything but characteristics
-        // hasher.combine(characteristics)
-        hasher.combine(includedServices)
-    }
-}
+public struct Service: Sendable {
 
-public struct Service {
-
-    let rawValue: CBService?
-    public let identifier: CBUUID
+    @UncheckedSendable public private(set) var rawValue: CBService?
+    public let identifier: UUID
     public let isPrimary: Bool
-    public var characteristics: () -> [Characteristic]
+    public var characteristics: @Sendable () -> [Characteristic]
     public var includedServices: [Service]
     
     init(from service: CBService) {
         rawValue = service
-        identifier = service.uuid
+        identifier = service.uuid.uuidValue
         isPrimary = service.isPrimary
         characteristics = { service.characteristics?.map(Characteristic.init) ?? [] }
         includedServices = service.includedServices?.map(Service.init) ?? []
@@ -39,11 +29,11 @@ public struct Service {
     init(
         identifier: CBUUID,
         isPrimary: Bool,
-        characteristics: @escaping () -> [Characteristic],
+        characteristics: @escaping @Sendable () -> [Characteristic],
         includedServices: [Service]
     ) {
         rawValue = nil
-        self.identifier = identifier
+        self.identifier = identifier.uuidValue
         self.isPrimary = isPrimary
         self.characteristics = characteristics
         self.includedServices = includedServices
@@ -60,7 +50,7 @@ extension Service {
 
 extension Service {
     
-    public enum Action: Equatable {
+    public enum Action: Equatable, Sendable {
         case didDiscoverIncludedServices(Result<[Service], BluetoothError>)
         case didDiscoverCharacteristics(Result<[Characteristic], BluetoothError>)
     }
@@ -70,7 +60,7 @@ extension Service {
     public static func mock(
         identifier: CBUUID,
         isPrimary: Bool,
-        characteristics: @escaping () -> [Characteristic],
+        characteristics: @Sendable @escaping () -> [Characteristic],
         includedServices: [Service]
     ) -> Self {
         Self(
@@ -83,8 +73,19 @@ extension Service {
 }
 
 extension Service: Identifiable {
-    public var id: CBUUID {
+    public var id: UUID {
         return identifier
+    }
+}
+
+extension Service: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(rawValue)
+        hasher.combine(identifier)
+        hasher.combine(isPrimary)
+        // including everything but characteristics
+        // hasher.combine(characteristics)
+        hasher.combine(includedServices)
     }
 }
 
