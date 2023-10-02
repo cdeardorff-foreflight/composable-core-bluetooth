@@ -85,7 +85,7 @@ extension BluetoothManager {
             },
             retrieveConnectedPeripherals: { @MainActor uuids in
                 await task.value.manager
-                    .retrieveConnectedPeripherals(withServices: uuids)
+                    .retrieveConnectedPeripherals(withServices: uuids.map(\.cbUUID))
                     .map(Peripheral.State.live)
             },
             retrievePeripherals: { @MainActor uuids in
@@ -95,7 +95,7 @@ extension BluetoothManager {
             },
             scanForPeripherals: { @MainActor services, options in
                 await task.value.manager.scanForPeripherals(
-                    withServices: services,
+                    withServices: services?.map(\.cbUUID),
                     options: options?.toDictionary())
             },
             stopScan: { @MainActor in

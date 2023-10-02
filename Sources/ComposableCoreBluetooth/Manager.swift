@@ -33,11 +33,11 @@ public struct BluetoothManager: Sendable {
     
     var cancelConnection: @Sendable (Peripheral.State) async -> Void
     
-    var retrieveConnectedPeripherals: @Sendable ([CBUUID]) async -> [Peripheral.State]
+    var retrieveConnectedPeripherals: @Sendable ([UUID]) async -> [Peripheral.State]
     
     var retrievePeripherals: @Sendable ([UUID]) async -> [Peripheral.State]
     
-    var scanForPeripherals: @Sendable ([CBUUID]?, ScanOptions?) async -> Void
+    var scanForPeripherals: @Sendable ([UUID]?, ScanOptions?) async -> Void
     
     var stopScan: @Sendable () async -> Void
     
@@ -64,7 +64,7 @@ extension BluetoothManager {
         await cancelConnection(peripheral)
     }
     
-    public func retrieveConnectedPeripherals(services: [CBUUID]) async -> [Peripheral.State] {
+    public func retrieveConnectedPeripherals(services: [UUID]) async -> [Peripheral.State] {
         await retrieveConnectedPeripherals(services)
     }
     
@@ -72,7 +72,7 @@ extension BluetoothManager {
         await retrievePeripherals(identifiers)
     }
     
-    public func scanForPeripherals(services: [CBUUID]? = nil, options: ScanOptions? = nil) async {
+    public func scanForPeripherals(services: [UUID]? = nil, options: ScanOptions? = nil) async {
         await scanForPeripherals(services, options)
     }
     
@@ -223,9 +223,9 @@ extension BluetoothManager {
         let allowDuplicates: Bool?
         let solicitedServiceUUIDs: [UUID]?
         
-        public init(allowDuplicates: Bool? = nil, solicitedServiceUUIDs: [CBUUID]? = nil) {
+        public init(allowDuplicates: Bool? = nil, solicitedServiceUUIDs: [UUID]? = nil) {
             self.allowDuplicates = allowDuplicates
-            self.solicitedServiceUUIDs = solicitedServiceUUIDs?.map(\.uuidValue)
+            self.solicitedServiceUUIDs = solicitedServiceUUIDs
         }
         
         init(from dictionary: [String: Any]?) {
@@ -253,9 +253,9 @@ extension BluetoothManager {
     public struct ConnectionEventOptions {
         
         let peripheralUUIDs: [UUID]?
-        let serviceUUIDs: [CBUUID]?
+        let serviceUUIDs: [UUID]?
         
-        public init(peripheralUUIDs: [UUID]? = nil, serviceUUIDs: [CBUUID]? = nil) {
+        public init(peripheralUUIDs: [UUID]? = nil, serviceUUIDs: [UUID]? = nil) {
             self.peripheralUUIDs = peripheralUUIDs
             self.serviceUUIDs = serviceUUIDs
         }
@@ -302,21 +302,19 @@ extension BluetoothManager {
         public init(
             localName: String? = nil,
             manufacturerData: Data? = nil,
-            serviceData: [CBUUID: Data]? = nil,
-            serviceUUIDs: [CBUUID]? = nil,
-            overflowServiceUUIDs: [CBUUID]? = nil,
-            solicitedServiceUUIDs: [CBUUID]? = nil,
+            serviceData: [UUID: Data]? = nil,
+            serviceUUIDs: [UUID]? = nil,
+            overflowServiceUUIDs: [UUID]? = nil,
+            solicitedServiceUUIDs: [UUID]? = nil,
             txPowerLevel: NSNumber? = nil,
             isConnectable: Bool? = nil
         ) {
             self.localName = localName
             self.manufacturerData = manufacturerData
-            self.serviceData = Dictionary(uniqueKeysWithValues: (serviceData ?? [:]).map {
-                return ($0.key.uuidValue, $0.value)
-            })
-            self.serviceUUIDs = serviceUUIDs?.map(\.uuidValue)
-            self.overflowServiceUUIDs = overflowServiceUUIDs?.map(\.uuidValue)
-            self.solicitedServiceUUIDs = solicitedServiceUUIDs?.map(\.uuidValue)
+            self.serviceData = serviceData
+            self.serviceUUIDs = serviceUUIDs
+            self.overflowServiceUUIDs = overflowServiceUUIDs
+            self.solicitedServiceUUIDs = solicitedServiceUUIDs
             self.txPowerLevel = txPowerLevel
             self.isConnectable = isConnectable
         }
