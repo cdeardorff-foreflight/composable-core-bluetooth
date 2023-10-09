@@ -29,29 +29,29 @@ public struct BluetoothManager: Sendable {
     
     public var delegate: @Sendable () async -> AsyncStream<Action>
     
-    var connect: @Sendable (Peripheral.State, ConnectionOptions?) async -> Void
+    public var connect: @Sendable (Peripheral.State, ConnectionOptions?) async -> Void
     
-    var cancelConnection: @Sendable (Peripheral.State) async -> Void
+    public var cancelConnection: @Sendable (Peripheral.State) async -> Void
     
-    var retrieveConnectedPeripherals: @Sendable ([UUID]) async -> [Peripheral.State]
+    public var retrieveConnectedPeripherals: @Sendable ([UUID]) async -> [Peripheral.State]
     
-    var retrievePeripherals: @Sendable ([UUID]) async -> [Peripheral.State]
+    public var retrievePeripherals: @Sendable ([UUID]) async -> [Peripheral.State]
     
-    var scanForPeripherals: @Sendable ([UUID]?, ScanOptions?) async -> Void
+    public var scanForPeripherals: @Sendable ([UUID]?, ScanOptions?) async -> Void
     
-    var stopScan: @Sendable () async -> Void
+    public var stopScan: @Sendable () async -> Void
     
-    var state: @Sendable () async -> CBManagerState
+    public var state: @Sendable () async -> CBManagerState
     
-    var peripheralEnvironment: @Sendable (UUID) async -> Peripheral.Environment?
+    public var peripheralEnvironment: @Sendable (UUID) async -> Peripheral.Environment?
     
-    var _authorization: @Sendable () -> CBManagerAuthorization
-    
-    @available(macOS, unavailable)
-    var registerForConnectionEvents: @Sendable (ConnectionEventOptions?) async -> Void
+    public var _authorization: @Sendable () -> CBManagerAuthorization
     
     @available(macOS, unavailable)
-    var supports: @Sendable (CBCentralManager.Feature) -> Bool
+    public var registerForConnectionEvents: @Sendable (ConnectionEventOptions?) async -> Void
+    
+    @available(macOS, unavailable)
+    public var supports: @Sendable (CBCentralManager.Feature) -> Bool
 }
 
 extension BluetoothManager {
