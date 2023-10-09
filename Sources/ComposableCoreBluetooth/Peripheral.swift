@@ -57,7 +57,14 @@ public enum Peripheral {
         #endif
     }
     
-    public struct Environment {
+    public struct Environment: Equatable, Hashable {
+        public static func == (lhs: Peripheral.Environment, rhs: Peripheral.Environment) -> Bool {
+            lhs.rawValue == rhs.rawValue
+        }
+        
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(rawValue)
+        }
         
         var rawValue: CBPeripheral?
         var delegate: CBPeripheralDelegate?
@@ -163,6 +170,7 @@ extension Peripheral.State: Identifiable {
 }
 
 extension Peripheral: Equatable {}
+extension Peripheral: Hashable {}
 
 extension Peripheral {
     public enum Action: Equatable, Sendable {
