@@ -12,13 +12,13 @@ import ComposableArchitecture
 
 extension CBManagerState: CustomStringConvertible {
     public var description: String {
-        return switch self {
-        case .unknown: "unknown"
-        case .resetting: "resetting"
-        case .unsupported: "unsupported"
-        case .unauthorized: "unauthorized"
-        case .poweredOff: "poweredOff"
-        case .poweredOn: "poweredOn"
+        switch self {
+        case .unknown: return "unknown"
+        case .resetting: return "resetting"
+        case .unsupported: return "unsupported"
+        case .unauthorized: return "unauthorized"
+        case .poweredOff: return "poweredOff"
+        case .poweredOn: return "poweredOn"
         @unknown default:
             fatalError()
         }
