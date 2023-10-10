@@ -14,7 +14,7 @@ import ComposableArchitecture
 private class DelegateRetainingCBCentralManager: CBCentralManager {
     private let retainedDelegate: CBCentralManagerDelegate?
     
-    override init(delegate: CBCentralManagerDelegate?, queue: dispatch_queue_t?, options: [String : Any]? = nil) {
+    override init(delegate: CBCentralManagerDelegate?, queue: DispatchQueue?, options: [String : Any]? = nil) {
         self.retainedDelegate = delegate
         super.init(delegate: delegate, queue: queue, options: options)
     }
