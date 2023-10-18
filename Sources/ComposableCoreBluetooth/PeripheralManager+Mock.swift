@@ -30,7 +30,7 @@ extension PeripheralManager {
         removeAllServices: @escaping (AnyHashable) -> Effect<Never> = { _ in
             _unimplemented("removeAllServices")
         },
-        startAdvertising: @escaping (AnyHashable, AdvertismentData?) -> Effect<Never> = { _, _ in
+        startAdvertising: @escaping (AnyHashable, AdvertisementData?) -> Effect<Never> = { _, _ in
             _unimplemented("startAdvertising")
         },
         stopAdvertising: @escaping (AnyHashable) -> Effect<Never> = { _ in
@@ -84,7 +84,7 @@ extension PeripheralManager {
         removeAllServices: @escaping (AnyHashable) -> Effect<Never> = { _ in
             .unimplemented("removeAllServices")
         },
-        startAdvertising: @escaping (AnyHashable, AdvertismentData?) -> Effect<Never> = { _, _ in
+        startAdvertising: @escaping (AnyHashable, AdvertisementData?) -> Effect<Never> = { _, _ in
             .unimplemented("startAdvertising")
         },
         stopAdvertising: @escaping (AnyHashable) -> Effect<Never> = { _ in

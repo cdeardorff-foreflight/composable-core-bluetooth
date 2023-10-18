@@ -78,9 +78,9 @@ extension PeripheralManager {
             }
         }
         
-        manager.startAdvertising = { id, advertismentData in
+        manager.startAdvertising = { id, advertisementData in
             .fireAndForget {
-                dependencies[id]?.manager.startAdvertising(advertismentData?.toDictionary())
+                dependencies[id]?.manager.startAdvertising(advertisementData?.toDictionary())
             }
         }
         

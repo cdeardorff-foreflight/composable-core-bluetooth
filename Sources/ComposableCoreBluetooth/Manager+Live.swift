@@ -166,7 +166,7 @@ extension BluetoothManager {
         
         
         func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
-            continuation.yield(.didDiscover(Peripheral.State.live(from: peripheral), BluetoothManager.AdvertismentData(from: advertisementData), RSSI))
+            continuation.yield(.didDiscover(Peripheral.State.live(from: peripheral), BluetoothManager.AdvertisementData(from: advertisementData), RSSI))
         }
         
         func centralManagerDidUpdateState(_ central: CBCentralManager) {

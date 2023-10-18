@@ -34,7 +34,7 @@ public struct PeripheralManager {
         _unimplemented("removeAllServices")
     }
     
-    var startAdvertising: (AnyHashable, AdvertismentData?) -> Effect<Never> = { _, _ in
+    var startAdvertising: (AnyHashable, AdvertisementData?) -> Effect<Never> = { _, _ in
         _unimplemented("startAdvertising")
     }
     
@@ -95,7 +95,7 @@ extension PeripheralManager {
         removeAllServices(id)
     }
     
-    public func startAdvertising(id: AnyHashable, _ adverstimentData: AdvertismentData?) -> Effect<Never> {
+    public func startAdvertising(id: AnyHashable, _ adverstimentData: AdvertisementData?) -> Effect<Never> {
         startAdvertising(id, adverstimentData)
     }
     
@@ -182,15 +182,15 @@ extension PeripheralManager {
     public struct RestorationOptions: Equatable {
         
         public let services: [Service]?
-        public let advertismentData: AdvertismentData?
+        public let advertisementData: AdvertisementData?
         
         init(from dictionary: [String: Any]) {
             services = (dictionary[CBPeripheralManagerRestoredStateServicesKey] as? [CBService])?.map(Service.init)
-            advertismentData = (dictionary[CBPeripheralManagerRestoredStateAdvertisementDataKey] as? [String: Any]).map(AdvertismentData.init)
+            advertisementData = (dictionary[CBPeripheralManagerRestoredStateAdvertisementDataKey] as? [String: Any]).map(AdvertisementData.init)
         }
     }
     
-    public struct AdvertismentData: Equatable {
+    public struct AdvertisementData: Equatable {
         
         public let localName: String?
         public let manufacturerData: Data?

@@ -109,7 +109,7 @@ extension BluetoothManager {
     public enum Action: Equatable, Sendable {
         case didUpdateState(CBManagerState)
         case didUpdateScanningState(Bool)
-        case didDiscover(Peripheral.State, AdvertismentData, NSNumber)
+        case didDiscover(Peripheral.State, AdvertisementData, NSNumber)
         case willRestore(RestorationOptions)
         
         case peripheral(UUID, Peripheral.Action)
@@ -288,7 +288,7 @@ extension BluetoothManager {
         }
     }
     
-    public struct AdvertismentData: Equatable, Sendable {
+    public struct AdvertisementData: Equatable, Sendable {
         
         public let localName: String?
         public let manufacturerData: Data?
