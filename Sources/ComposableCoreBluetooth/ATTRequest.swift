@@ -9,7 +9,7 @@
 import Foundation
 import CoreBluetooth
 
-public struct ATTRequest: Equatable {
+public struct ATTRequest: Equatable, Sendable {
     
     let rawValue: CBATTRequest?
     public let characteristic: Characteristic

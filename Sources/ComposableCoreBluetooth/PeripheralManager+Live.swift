@@ -12,183 +12,178 @@ import ComposableArchitecture
 import Combine
 import CasePaths
 
-@available(tvOS, unavailable)
-@available(watchOS, unavailable)
-private var dependencies: [AnyHashable: Dependencies] = [:]
+private class DelegateRetainingCBPeripheralManager: CBPeripheralManager {
+    private let retainedDelegate: CBPeripheralManagerDelegate?
+    
+    override init(delegate: CBPeripheralManagerDelegate?, queue: DispatchQueue?, options: [String : Any]? = nil) {
+        self.retainedDelegate = delegate
+        super.init(delegate: delegate, queue: queue, options: options)
+    }
+}
 
-@available(tvOS, unavailable)
-@available(watchOS, unavailable)
-private struct Dependencies {
-    let manager: CBPeripheralManager
-    let delegate: PeripheralManager.Delegate
-    let subscriber: Effect<PeripheralManager.Action>.Subscriber
+private struct PeripheralManagerSendableBox: Sendable {
+    @UncheckedSendable var manager: CBPeripheralManager
+    var delegateStream: AsyncStream<PeripheralManager.Action>
+    var delegateStreamContinuation: AsyncStream<PeripheralManager.Action>.Continuation
 }
 
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 extension PeripheralManager {
     
-    public static let live: PeripheralManager = { () -> PeripheralManager in
-        var manager = PeripheralManager()
-        
-        manager.create = { id, queue, options in
-            .concatenate(
-                Effect.run { subscriber in
-                    let delegate = Delegate(subscriber)
-                    let manager = CBPeripheralManager(delegate: delegate, queue: queue, options: options?.toDictionary())
-                    
-                    dependencies[id] = Dependencies(manager: manager, delegate: delegate, subscriber: subscriber)
-                    
-                    return AnyCancellable {
-                        dependencies[id] = nil
-                    }
-                },
-                Deferred(createPublisher: { () -> AnyPublisher<PeripheralManager.Action, Never> in
-                    dependencies[id]?
-                        .manager
-                        .publisher(for: \.isAdvertising)
-                        .map((/PeripheralManager.Action.didUpdateAdvertisingState..Result<Bool, BluetoothError>.success).embed)
-                        .eraseToAnyPublisher() ?? Effect.none.eraseToAnyPublisher()
-                }).eraseToEffect()
+    public static func live(queue: DispatchQueue?, options: InitializationOptions?) -> PeripheralManager {
+        let task = Task<PeripheralManagerSendableBox, Never>(operation: { @MainActor in
+            // TODO: Remove autounwrap
+            var continuation: AsyncStream<Action>.Continuation!
+            let stream = AsyncStream<Action> { continuation = $0 }
+            
+            let delegate = Delegate(continuation: continuation)
+            let manager = DelegateRetainingCBPeripheralManager(
+                delegate: delegate,
+                queue: queue,
+                options: options?.toDictionary()
             )
-        }
-        
-        manager.destroy = { id in
-            .fireAndForget {
-                dependencies[id]?.subscriber.send(completion: .finished)
-                dependencies[id] = nil
-            }
-        }
-        
-        manager.addService = { id, service in
-            .fireAndForget {
-                dependencies[id]?.manager.add(service.cbMutableService)
-            }
-        }
-        
-        manager.removeService = { id, service in
-            .fireAndForget {
-                dependencies[id]?.manager.remove(service.cbMutableService)
-            }
-        }
-        
-        manager.removeAllServices = { id in
-            .fireAndForget {
-                dependencies[id]?.manager.removeAllServices()
-            }
-        }
-        
-        manager.startAdvertising = { id, advertisementData in
-            .fireAndForget {
-                dependencies[id]?.manager.startAdvertising(advertisementData?.toDictionary())
-            }
-        }
-        
-        manager.stopAdvertising = { id in
-            .fireAndForget {
-                dependencies[id]?.manager.stopAdvertising()
-            }
-        }
-        
-        manager.updateValue = { id, data, characteristic, centrals in
-            .fireAndForget {
-                dependencies[id]?.manager.updateValue(data, for: characteristic.cbMutableCharacteristic, onSubscribedCentrals: centrals?.compactMap(\.rawValue))
-            }
-        }
-        
-        manager.respondToRequest = { id, request, result in
             
-            guard let rawRequest = request.rawValue else {
-                couldNotFindRawRequestValue()
-                return .none
-            }
-            
-            return .fireAndForget {
-                dependencies[id]?.manager.respond(to: rawRequest, withResult: result)
-            }
-        }
-        
-        manager.setDesiredConnectionLatency = { id, latency, central in
-            
-            guard let rawCentral = central.rawValue else {
-                couldNotFindRawRequestValue()
-                return .none
-            }
-            
-            return .fireAndForget {
-                dependencies[id]?.manager.setDesiredConnectionLatency(latency, for: rawCentral)
-            }
-        }
-        
-        manager.publishL2CAPChannel = { id, encryption in
-            .fireAndForget {
-                dependencies[id]?.manager.publishL2CAPChannel(withEncryption: encryption)
-            }
-        }
-        
-        manager.unpublishL2CAPChannel = { id, psm in
-            .fireAndForget {
-                dependencies[id]?.manager.unpublishL2CAPChannel(psm)
-            }
-        }
+            return .init(
+                manager: manager,
+                delegateStream: stream,
+                delegateStreamContinuation: continuation)
+        })
 
-        return manager
-    }()
+        return Self(
+            delegate: { @MainActor in
+                let box = await task.value
+                return .init { continuation in
+                    Task {
+                        for try await action in box.delegateStream {
+                            continuation.yield(action)
+                        }
+                    }
+                }
+            },
+            addService: { @MainActor service in
+                let manager = await task.value.manager
+                manager.add(service.cbMutableService)
+            },
+            removeService: { @MainActor service in
+                let manager = await task.value.manager
+                manager.remove(service.cbMutableService)
+            },
+            removeAllServices: {
+                let manager = await task.value.manager
+                manager.removeAllServices()
+            },
+            startAdvertising: { @MainActor advertisementData in
+                let manager = await task.value.manager
+                manager.startAdvertising(advertisementData?.toDictionary())
+            },
+            stopAdvertising: {
+                let manager = await task.value.manager
+                manager.stopAdvertising()
+            },
+            updateValue: { value, characteristic, subscribedCentrals in
+                await task.value.manager
+                    .updateValue(value, for: characteristic.cbMutableCharacteristic, onSubscribedCentrals: subscribedCentrals?.map(\.rawValue))
+            },
+            respondToRequest: { request, errorCode in
+                guard let cbAttRequest = request.rawValue else {
+                    couldNotFindRawRequestValue()
+                    return
+                }
+                let manager = await task.value.manager
+                manager.respond(to: cbAttRequest, withResult: errorCode)
+            },
+            setDesiredConnectionLatency: { latency, central in
+                guard let cbCentral = central.rawValue else {
+                    couldNotFindRawCentralValue()
+                    return
+                }
+                let manager = await task.value.manager
+                manager.setDesiredConnectionLatency(latency, for: cbCentral)
+            },
+            publishL2CAPChannel: { withEncryption in
+                let manager = await task.value.manager
+                manager.publishL2CAPChannel(withEncryption: withEncryption)
+            },
+            unpublishL2CAPChannel: { psm in
+                let manager = await task.value.manager
+                manager.unpublishL2CAPChannel(psm)
+            },
+            state: { @MainActor in
+                await task.value.manager.state
+            },
+            _authorization: {
+                CBPeripheralManager.authorization
+            }
+            /*
+            peripheralEnvironment: { @MainActor (uuid) -> Peripheral.Environment? in
+                let box = await task.value
+                guard let rawPeripheral = box.manager.retrievePeripherals(withIdentifiers: [uuid]).first else {
+                    couldNotFindRawPeripheralValue()
+                    return nil
+                }
+                
+                return Peripheral.Environment.live(
+                    from: rawPeripheral,
+                    continuation: box.delegateStreamContinuation)
+            },
+            */
+        )
+    }
     
     class Delegate: NSObject, CBPeripheralManagerDelegate {
+        let continuation: AsyncStream<PeripheralManager.Action>.Continuation
         
-        let subscriber: Effect<PeripheralManager.Action>.Subscriber
-        
-        init(_ subscriber: Effect<PeripheralManager.Action>.Subscriber) {
-            self.subscriber = subscriber
+        init(continuation: AsyncStream<PeripheralManager.Action>.Continuation) {
+            self.continuation = continuation
         }
         
         func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
-            subscriber.send(.didUpdateState(peripheral.state))
+            continuation.yield(.didUpdateState(peripheral.state))
         }
         
         func peripheralManager(_ peripheral: CBPeripheralManager, willRestoreState dict: [String : Any]) {
-            subscriber.send(.willRestore(RestorationOptions(from: dict)))
+            continuation.yield(.willRestore(RestorationOptions(from: dict)))
         }
         
         func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
-            subscriber.send(.didAddService(convertToResult(Service(from: service), error: error)))
+            continuation.yield(.didAddService(convertToResult(Service(from: service), error: error)))
         }
         
         func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) {
-            subscriber.send(.didUpdateAdvertisingState(convertToResult(true, error: error)))
+            continuation.yield(.didUpdateAdvertisingState(convertToResult(true, error: error)))
         }
         
         func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didSubscribeTo characteristic: CBCharacteristic) {
-            subscriber.send(.didSubscribeTo(Characteristic(from: characteristic), Central(from: central)))
+            continuation.yield(.didSubscribeTo(Characteristic(from: characteristic), Central(from: central)))
         }
         
         func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didUnsubscribeFrom characteristic: CBCharacteristic) {
-            subscriber.send(.didUnsubscribeFrom(Characteristic(from: characteristic), Central(from: central)))
+            continuation.yield(.didUnsubscribeFrom(Characteristic(from: characteristic), Central(from: central)))
         }
         
         func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) {
-            subscriber.send(.isReadyToUpdateSubscribers)
+            continuation.yield(.isReadyToUpdateSubscribers)
         }
         
         func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveRead request: CBATTRequest) {
-            subscriber.send(.didReceiveRead(ATTRequest(from: request)))
+            continuation.yield(.didReceiveRead(ATTRequest(from: request)))
         }
         
         func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
-            subscriber.send(.didReceiveWrite(requests.map(ATTRequest.init)))
+            continuation.yield(.didReceiveWrite(requests.map(ATTRequest.init)))
         }
         
         func peripheralManager(_ peripheral: CBPeripheralManager, didPublishL2CAPChannel PSM: CBL2CAPPSM, error: Error?) {
-            subscriber.send(.didPublishL2CAPChannel(convertToResult(PSM, error: error)))
+            continuation.yield(.didPublishL2CAPChannel(convertToResult(PSM, error: error)))
         }
         
         func peripheralManager(_ peripheral: CBPeripheralManager, didUnpublishL2CAPChannel PSM: CBL2CAPPSM, error: Error?) {
-            subscriber.send(.didUnpublishL2CAPChannel(convertToResult(PSM, error: error)))
+            continuation.yield(.didUnpublishL2CAPChannel(convertToResult(PSM, error: error)))
         }
         
         func peripheralManager(_ peripheral: CBPeripheralManager, didOpen channel: CBL2CAPChannel?, error: Error?) {
-            subscriber.send(.didOpen(convertToResult(channel, error: error)))
+            continuation.yield(.didOpen(convertToResult(channel, error: error)))
         }
     }
 }

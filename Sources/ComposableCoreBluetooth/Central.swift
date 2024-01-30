@@ -9,7 +9,7 @@
 import Foundation
 import CoreBluetooth
 
-public struct Central: Equatable {
+public struct Central: Equatable, Sendable {
     
     let rawValue: CBCentral?
     public let identifier: UUID
