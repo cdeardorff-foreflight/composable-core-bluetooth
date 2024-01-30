@@ -12,115 +12,77 @@ import ComposableArchitecture
 
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
-public struct PeripheralManager {
+public struct PeripheralManager: Sendable {
     
-    var create: (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action> = { _, _, _ in
-        _unimplemented("create")
-    }
+    public var delegate: @Sendable () async -> AsyncStream<Action>
     
-    var destroy: (AnyHashable) -> Effect<Never> = { _ in
-        _unimplemented("destroy")
-    }
+    public var addService: @Sendable (MutableService) async -> Void
     
-    var addService: (AnyHashable, MutableService) -> Effect<Never> = { _, _ in
-        _unimplemented("addService")
-    }
+    public var removeService: @Sendable (MutableService) async -> Void
     
-    var removeService: (AnyHashable, MutableService) -> Effect<Never> = { _, _ in
-        _unimplemented("removeService")
-    }
+    public var removeAllServices: @Sendable () async -> Void
+        
+    public var startAdvertising: @Sendable (AdvertisementData?) async -> Void
     
-    var removeAllServices: (AnyHashable) -> Effect<Never> = { _ in
-        _unimplemented("removeAllServices")
-    }
+    public var stopAdvertising: @Sendable () async -> Void
+
+    public var updateValue: @Sendable (Data, MutableCharacteristic, [Central]?) async -> Bool
     
-    var startAdvertising: (AnyHashable, AdvertisementData?) -> Effect<Never> = { _, _ in
-        _unimplemented("startAdvertising")
-    }
+    public var respondToRequest: @Sendable (ATTRequest, CBATTError.Code) async -> Void
+
+    public var setDesiredConnectionLatency: @Sendable (CBPeripheralManagerConnectionLatency, Central) async -> Void
+
+    public var publishL2CAPChannel: @Sendable (Bool) async -> Void
+
+    public var unpublishL2CAPChannel: @Sendable (CBL2CAPPSM) async -> Void
+
+    public var state: @Sendable () async -> CBManagerState
     
-    var stopAdvertising: (AnyHashable) -> Effect<Never> = { _ in
-        _unimplemented("stopAdvertising")
-    }
-    
-    var updateValue: (AnyHashable, Data, MutableCharacteristic, [Central]?) -> Effect<Bool> = { _, _, _, _ in
-        _unimplemented("updateValue")
-    }
-    
-    var respondToRequest: (AnyHashable, ATTRequest, CBATTError.Code) -> Effect<Never> = { _, _, _ in
-        _unimplemented("respondToRequest")
-    }
-    
-    var setDesiredConnectionLatency: (AnyHashable, CBPeripheralManagerConnectionLatency, Central) -> Effect<Never> = { _, _, _ in
-        _unimplemented("setDesiredConnectionLatency")
-    }
-    
-    var publishL2CAPChannel: (AnyHashable, Bool) -> Effect<Never> = { _, _ in
-        _unimplemented("publishL2CAPChannel")
-    }
-    
-    var unpublishL2CAPChannel: (AnyHashable, CBL2CAPPSM) -> Effect<Never> = { _, _ in
-        _unimplemented("unpublishL2CAPChannel")
-    }
-    
-    var state: (AnyHashable) -> CBManagerState = { _ in
-        _unimplemented("state")
-    }
-    
-    var _authorization: () -> CBManagerAuthorization = {
-        _unimplemented("authorization")
-    }
+    public var _authorization: @Sendable () -> CBManagerAuthorization
 }
 
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 extension PeripheralManager {
     
-    public func create(id: AnyHashable, queue: DispatchQueue?, options: InitializationOptions?) -> Effect<Action> {
-        create(id, queue, options)
+    public func add(service: MutableService) async {
+        await addService(service)
     }
     
-    public func destroy(id: AnyHashable) -> Effect<Never> {
-        destroy(id)
+    public func remove(service: MutableService) async {
+        await removeService(service)
     }
     
-    public func add(id: AnyHashable, service: MutableService) -> Effect<Never> {
-        addService(id, service)
+    public func removeAllServices() async {
+        await removeAllServices()
     }
     
-    public func remove(id: AnyHashable, service: MutableService) -> Effect<Never> {
-        removeService(id, service)
+    public func startAdvertising(_ advertisementData: AdvertisementData?) async {
+        await startAdvertising(advertisementData)
     }
     
-    public func removeAllServices(id: AnyHashable) -> Effect<Never> {
-        removeAllServices(id)
+    public func stopAdvertising() async {
+        await stopAdvertising()
     }
     
-    public func startAdvertising(id: AnyHashable, _ adverstimentData: AdvertisementData?) -> Effect<Never> {
-        startAdvertising(id, adverstimentData)
+    public func updateValue(_ data: Data, for characteristic: MutableCharacteristic, onSubscribed centrals: [Central]?) async -> Bool {
+        await updateValue(data, characteristic, centrals)
     }
     
-    public func stopAdvertising(id: AnyHashable) -> Effect<Never> {
-        stopAdvertising(id)
+    public func respond(to request: ATTRequest, with result: CBATTError.Code) async {
+        await respondToRequest(request, result)
     }
     
-    public func updateValue(id: AnyHashable, _ data: Data, for characteristic: MutableCharacteristic, onSubscribed centrals: [Central]?) -> Effect<Bool> {
-        updateValue(id, data, characteristic, centrals)
+    public func setDesiredConnectionLatency(_ latency: CBPeripheralManagerConnectionLatency, for central: Central) async {
+        await setDesiredConnectionLatency(latency, central)
     }
     
-    public func respond(id: AnyHashable, to request: ATTRequest, with result: CBATTError.Code) -> Effect<Never> {
-        respondToRequest(id, request, result)
+    public func publishL2CAPChannel(withEncryption: Bool) async {
+        await publishL2CAPChannel(withEncryption)
     }
     
-    public func setDesiredConnectionLatency(id: AnyHashable, _ latency: CBPeripheralManagerConnectionLatency, for central: Central) -> Effect<Never> {
-        setDesiredConnectionLatency(id, latency, central)
-    }
-    
-    public func publishL2CAPChannel(id: AnyHashable, withEncryption: Bool) -> Effect<Never> {
-        publishL2CAPChannel(id, withEncryption)
-    }
-    
-    public func unpublishL2CAPChannel(id: AnyHashable, _ psm: CBL2CAPPSM) -> Effect<Never> {
-        unpublishL2CAPChannel(id, psm)
+    public func unpublishL2CAPChannel(_ psm: CBL2CAPPSM) async {
+        await unpublishL2CAPChannel(psm)
     }
     
     @available(iOS 13.1, macOS 10.15, macCatalyst 13.1, tvOS 13.0, watchOS 6.0, *)
@@ -132,8 +94,7 @@ extension PeripheralManager {
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 extension PeripheralManager {
-    
-    public enum Action: Equatable {
+    public enum Action: Equatable, Sendable {
         case willRestore(RestorationOptions)
         case didAddService(Result<Service, BluetoothError>)
         case didSubscribeTo(Characteristic, Central)
@@ -179,7 +140,7 @@ extension PeripheralManager {
         }
     }
     
-    public struct RestorationOptions: Equatable {
+    public struct RestorationOptions: Equatable, Sendable {
         
         public let services: [Service]?
         public let advertisementData: AdvertisementData?
@@ -190,14 +151,14 @@ extension PeripheralManager {
         }
     }
     
-    public struct AdvertisementData: Equatable {
+    public struct AdvertisementData: Equatable, Sendable {
         
         public let localName: String?
         public let manufacturerData: Data?
-        public let serviceData: [CBUUID: Data]?
-        public let serviceUUIDs: [CBUUID]?
-        public let overflowServiceUUIDs: [CBUUID]?
-        public let solicitedServiceUUIDs: [CBUUID]?
+        @UncheckedSendable public var serviceData: [CBUUID: Data]?
+        @UncheckedSendable public var serviceUUIDs: [CBUUID]?
+        @UncheckedSendable public var overflowServiceUUIDs: [CBUUID]?
+        @UncheckedSendable public var solicitedServiceUUIDs: [CBUUID]?
         public let txPowerLevel: NSNumber?
         public let isConnectable: Bool?
         

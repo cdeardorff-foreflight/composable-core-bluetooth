@@ -27,9 +27,9 @@ private struct BluetoothManagerSendableBox: Sendable {
 }
 
 extension BluetoothManager {
-        
     public static func live(queue: DispatchQueue?, options: InitializationOptions?) -> BluetoothManager {
         let task = Task<BluetoothManagerSendableBox, Never>(operation: { @MainActor in
+            // TODO: Remove autounwrap
             var continuation: AsyncStream<Action>.Continuation!
             let stream = AsyncStream<Action> { continuation = $0 }
             

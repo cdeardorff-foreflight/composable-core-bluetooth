@@ -14,111 +14,52 @@ import ComposableArchitecture
 @available(watchOS, unavailable)
 extension PeripheralManager {
     
-    public static func mock(
-        create: @escaping (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action> = { _, _, _ in
-            _unimplemented("create")
-        },
-        destroy: @escaping (AnyHashable) -> Effect<Never> = { _ in
-            _unimplemented("destroy")
-        },
-        addService: @escaping (AnyHashable, MutableService) -> Effect<Never> = { _, _ in
-            _unimplemented("addService")
-        },
-        removeService: @escaping (AnyHashable, MutableService) -> Effect<Never> = { _, _ in
-            _unimplemented("removeService")
-        },
-        removeAllServices: @escaping (AnyHashable) -> Effect<Never> = { _ in
-            _unimplemented("removeAllServices")
-        },
-        startAdvertising: @escaping (AnyHashable, AdvertisementData?) -> Effect<Never> = { _, _ in
-            _unimplemented("startAdvertising")
-        },
-        stopAdvertising: @escaping (AnyHashable) -> Effect<Never> = { _ in
-            _unimplemented("stopAdvertising")
-        },
-        updateValue: @escaping (AnyHashable, Data, MutableCharacteristic, [Central]?) -> Effect<Bool> = { _, _, _, _ in
-            _unimplemented("updateValue")
-        },
-        respondToRequest: @escaping (AnyHashable, ATTRequest, CBATTError.Code) -> Effect<Never> = { _, _, _ in
+    public static let mock = Self(
+        delegate: { unimplemented() },
+        addService: { _ in unimplemented() },
+        removeService: { _ in unimplemented() },
+        removeAllServices: { unimplemented() },
+        startAdvertising: { _ in unimplemented() },
+        stopAdvertising: { unimplemented() },
+        updateValue: { _, _, _ in unimplemented() },
+        respondToRequest: { _, _ in
             _unimplemented("respondToRequest")
         },
-        setDesiredConnectionLatency: @escaping (AnyHashable, CBPeripheralManagerConnectionLatency, Central) -> Effect<Never> = { _, _, _ in
+        setDesiredConnectionLatency: { _, _ in
             _unimplemented("setDesiredConnectionLatency")
         },
-        publishL2CAPChannel: @escaping (AnyHashable, Bool) -> Effect<Never> = { _, _ in
+        publishL2CAPChannel: { _ in
             _unimplemented("publishL2CAPChannel")
         },
-        unpublishL2CAPChannel: @escaping (AnyHashable, CBL2CAPPSM) -> Effect<Never> = { _, _ in
+        unpublishL2CAPChannel: { _ in
             _unimplemented("unpublishL2CAPChannel")
-        }
-    ) -> Self {
-        Self(
-            create: create,
-            destroy: destroy,
-            addService: addService,
-            removeService: removeService,
-            removeAllServices: removeAllServices,
-            startAdvertising: startAdvertising,
-            stopAdvertising: stopAdvertising,
-            updateValue: updateValue,
-            respondToRequest: respondToRequest,
-            setDesiredConnectionLatency: setDesiredConnectionLatency,
-            publishL2CAPChannel: publishL2CAPChannel,
-            unpublishL2CAPChannel: unpublishL2CAPChannel
-        )
-    }
+        },
+        state: { unimplemented() },
+        _authorization: { unimplemented() }
+    )
+
     
-    public static func failing(
-        create: @escaping (AnyHashable, DispatchQueue?, InitializationOptions?) -> Effect<Action> = { _, _, _ in
-            .unimplemented("create")
+    public static let failing = Self(
+        delegate: { unimplemented() },
+        addService: { _ in unimplemented() },
+        removeService: { _ in unimplemented() },
+        removeAllServices: { unimplemented() },
+        startAdvertising: { _ in unimplemented() },
+        stopAdvertising: { unimplemented() },
+        updateValue: { _, _, _ in unimplemented() },
+        respondToRequest: { _, _ in
+            _unimplemented("respondToRequest")
         },
-        destroy: @escaping (AnyHashable) -> Effect<Never> = { _ in
-            .unimplemented("destroy")
+        setDesiredConnectionLatency: { _, _ in
+            _unimplemented("setDesiredConnectionLatency")
         },
-        addService: @escaping (AnyHashable, MutableService) -> Effect<Never> = { _, _ in
-            .unimplemented("addService")
+        publishL2CAPChannel: { _ in
+            _unimplemented("publishL2CAPChannel")
         },
-        removeService: @escaping (AnyHashable, MutableService) -> Effect<Never> = { _, _ in
-            .unimplemented("removeService")
+        unpublishL2CAPChannel: { _ in
+            _unimplemented("unpublishL2CAPChannel")
         },
-        removeAllServices: @escaping (AnyHashable) -> Effect<Never> = { _ in
-            .unimplemented("removeAllServices")
-        },
-        startAdvertising: @escaping (AnyHashable, AdvertisementData?) -> Effect<Never> = { _, _ in
-            .unimplemented("startAdvertising")
-        },
-        stopAdvertising: @escaping (AnyHashable) -> Effect<Never> = { _ in
-            .unimplemented("stopAdvertising")
-        },
-        updateValue: @escaping (AnyHashable, Data, MutableCharacteristic, [Central]?) -> Effect<Bool> = { _, _, _, _ in
-            .unimplemented("updateValue")
-        },
-        respondToRequest: @escaping (AnyHashable, ATTRequest, CBATTError.Code) -> Effect<Never> = { _, _, _ in
-            .unimplemented("respondToRequest")
-        },
-        setDesiredConnectionLatency: @escaping (AnyHashable, CBPeripheralManagerConnectionLatency, Central) -> Effect<Never> = { _, _, _ in
-            .unimplemented("setDesiredConnectionLatency")
-        },
-        publishL2CAPChannel: @escaping (AnyHashable, Bool) -> Effect<Never> = { _, _ in
-            .unimplemented("publishL2CAPChannel")
-        },
-        unpublishL2CAPChannel: @escaping (AnyHashable, CBL2CAPPSM) -> Effect<Never> = { _, _ in
-            .unimplemented("unpublishL2CAPChannel")
-        }
-    ) -> Self {
-        Self(
-            create: create,
-            destroy: destroy,
-            addService: addService,
-            removeService: removeService,
-            removeAllServices: removeAllServices,
-            startAdvertising: startAdvertising,
-            stopAdvertising: stopAdvertising,
-            updateValue: updateValue,
-            respondToRequest: respondToRequest,
-            setDesiredConnectionLatency: setDesiredConnectionLatency,
-            publishL2CAPChannel: publishL2CAPChannel,
-            unpublishL2CAPChannel: unpublishL2CAPChannel
-        )
-    }
+        state: { unimplemented() },
+        _authorization: { unimplemented() }
+    )
 }
