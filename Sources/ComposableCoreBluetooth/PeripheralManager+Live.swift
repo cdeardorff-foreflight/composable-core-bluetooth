@@ -6,6 +6,8 @@
 //  Copyright © 2020 Philipp Gabriel. All rights reserved.
 //
 
+#if !os(watchOS)
+
 import Foundation
 import CoreBluetooth
 import ComposableArchitecture
@@ -27,8 +29,6 @@ private struct PeripheralManagerSendableBox: Sendable {
     var delegateStreamContinuation: AsyncStream<PeripheralManager.Action>.Continuation
 }
 
-@available(tvOS, unavailable)
-@available(watchOS, unavailable)
 extension PeripheralManager {
     
     public static func live(queue: DispatchQueue?, options: InitializationOptions?) -> PeripheralManager {
@@ -175,3 +175,5 @@ extension PeripheralManager {
         }
     }
 }
+
+#endif
