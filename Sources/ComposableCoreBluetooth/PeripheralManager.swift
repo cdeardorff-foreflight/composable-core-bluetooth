@@ -155,10 +155,10 @@ extension PeripheralManager {
         
         public let localName: String?
         public let manufacturerData: Data?
-        public let serviceData: [CBUUID: Data]?
-        public let serviceUUIDs: [CBUUID]?
-        public let overflowServiceUUIDs: [CBUUID]?
-        public let solicitedServiceUUIDs: [CBUUID]?
+        @UncheckedSendable public var serviceData: [CBUUID: Data]?
+        @UncheckedSendable public var serviceUUIDs: [CBUUID]?
+        @UncheckedSendable public var overflowServiceUUIDs: [CBUUID]?
+        @UncheckedSendable public var solicitedServiceUUIDs: [CBUUID]?
         public let txPowerLevel: NSNumber?
         public let isConnectable: Bool?
         

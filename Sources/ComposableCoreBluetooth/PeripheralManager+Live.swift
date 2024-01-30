@@ -69,7 +69,7 @@ extension PeripheralManager {
                 let manager = await task.value.manager
                 manager.remove(service.cbMutableService)
             },
-            removeAllServices: {
+            removeAllServices: { @MainActor in
                 let manager = await task.value.manager
                 manager.removeAllServices()
             },
@@ -77,15 +77,16 @@ extension PeripheralManager {
                 let manager = await task.value.manager
                 manager.startAdvertising(advertisementData?.toDictionary())
             },
-            stopAdvertising: {
+            stopAdvertising: { @MainActor in
                 let manager = await task.value.manager
                 manager.stopAdvertising()
             },
-            updateValue: { value, characteristic, subscribedCentrals in
-                await task.value.manager
-                    .updateValue(value, for: characteristic.cbMutableCharacteristic, onSubscribedCentrals: subscribedCentrals?.map(\.rawValue))
+            updateValue: { @MainActor value, characteristic, subscribedCentrals in
+                let manager = await task.value.manager
+                let centrals = subscribedCentrals?.compactMap(\.rawValue)
+                return manager.updateValue(value, for: characteristic.cbMutableCharacteristic, onSubscribedCentrals: centrals)
             },
-            respondToRequest: { request, errorCode in
+            respondToRequest: { @MainActor request, errorCode in
                 guard let cbAttRequest = request.rawValue else {
                     couldNotFindRawRequestValue()
                     return
@@ -93,7 +94,7 @@ extension PeripheralManager {
                 let manager = await task.value.manager
                 manager.respond(to: cbAttRequest, withResult: errorCode)
             },
-            setDesiredConnectionLatency: { latency, central in
+            setDesiredConnectionLatency: { @MainActor latency, central in
                 guard let cbCentral = central.rawValue else {
                     couldNotFindRawCentralValue()
                     return
@@ -101,11 +102,11 @@ extension PeripheralManager {
                 let manager = await task.value.manager
                 manager.setDesiredConnectionLatency(latency, for: cbCentral)
             },
-            publishL2CAPChannel: { withEncryption in
+            publishL2CAPChannel: { @MainActor withEncryption in
                 let manager = await task.value.manager
                 manager.publishL2CAPChannel(withEncryption: withEncryption)
             },
-            unpublishL2CAPChannel: { psm in
+            unpublishL2CAPChannel: { @MainActor psm in
                 let manager = await task.value.manager
                 manager.unpublishL2CAPChannel(psm)
             },
@@ -115,19 +116,6 @@ extension PeripheralManager {
             _authorization: {
                 CBPeripheralManager.authorization
             }
-            /*
-            peripheralEnvironment: { @MainActor (uuid) -> Peripheral.Environment? in
-                let box = await task.value
-                guard let rawPeripheral = box.manager.retrievePeripherals(withIdentifiers: [uuid]).first else {
-                    couldNotFindRawPeripheralValue()
-                    return nil
-                }
-                
-                return Peripheral.Environment.live(
-                    from: rawPeripheral,
-                    continuation: box.delegateStreamContinuation)
-            },
-            */
         )
     }
     
